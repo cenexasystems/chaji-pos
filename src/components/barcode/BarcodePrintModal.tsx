@@ -438,7 +438,7 @@ export const BarcodePrintModal: React.FC<BarcodePrintModalProps> = ({
                 </div>
                 <p className="text-[11px] text-gray-500 mt-1">
                   {printerType === 'label'
-                    ? 'Roll label printer (1 label per page)'
+                    ? `Roll label printer (${(selectedPreset.labelsPerRow || 1) > 1 ? `${selectedPreset.labelsPerRow} labels per page` : '1 label per page'})`
                     : 'A4 sheet printer (Canon G2010, HP, Epson)'}
                 </p>
               </div>
