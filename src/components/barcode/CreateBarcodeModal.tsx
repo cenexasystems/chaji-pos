@@ -431,9 +431,21 @@ export const CreateBarcodeModal: React.FC<CreateBarcodeModalProps> = ({
     })
 
     let bodyContent = ''
+    // How many labels sit side-by-side across the physical roll/sheet width.
+    // A roll printer fed with a "2-up" / "3-up" die-cut roll MUST receive a page
+    // that is the full physical width (all columns), not a single label's width —
+    // otherwise the printer anchors the narrow page to one side of the roll and
+    // the other column(s) print blank.
+    const columns = isThermal ? Math.max(1, currentSizeConfig.labelsPerRow || 1) : 1
+    const gapMm = currentSizeConfig.horizontalGapMm || 0
+
     if (isThermal) {
-      // 1 barcode per page for thermal roll printing
-      bodyContent = allStickers.join('')
+      const rows: string[] = []
+      for (let i = 0; i < allStickers.length; i += columns) {
+        const rowStickers = allStickers.slice(i, i + columns)
+        rows.push(`<div class="sticker-row">${rowStickers.join('')}</div>`)
+      }
+      bodyContent = rows.join('')
     } else {
       // Regular A4 printer container
       bodyContent = `
@@ -453,7 +465,7 @@ export const CreateBarcodeModal: React.FC<CreateBarcodeModalProps> = ({
             @page {
               ${
                 isThermal
-                  ? `size: ${currentSizeConfig.widthMm}mm ${currentSizeConfig.heightMm}mm; margin: 0mm !important; marks: none !important;`
+                  ? `size: ${(currentSizeConfig.widthMm * columns + gapMm * (columns - 1)).toFixed(2)}mm ${currentSizeConfig.heightMm}mm; margin: 0mm !important; marks: none !important;`
                   : `size: A4 portrait; margin: 10mm !important;`
               }
             }
@@ -476,6 +488,18 @@ export const CreateBarcodeModal: React.FC<CreateBarcodeModalProps> = ({
               align-content: flex-start;
               gap: 3mm 4mm;
             }
+            .sticker-row {
+              display: flex;
+              flex-direction: row;
+              align-items: flex-start;
+              gap: ${gapMm}mm;
+              width: ${(currentSizeConfig.widthMm * columns + gapMm * (columns - 1)).toFixed(2)}mm;
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+            }
+            .sticker-row + .sticker-row {
+              ${isThermal ? 'break-before: page !important; page-break-before: always !important;' : ''}
+            }
             .label-sticker {
               width: ${currentSizeConfig.widthMm}mm !important;
               height: ${currentSizeConfig.heightMm}mm !important;
@@ -489,13 +513,11 @@ export const CreateBarcodeModal: React.FC<CreateBarcodeModalProps> = ({
               align-items: center;
               text-align: center;
               overflow: hidden;
+              flex-shrink: 0;
               break-inside: avoid !important;
               page-break-inside: avoid !important;
               background: #fff;
               ${!isThermal ? 'border: 0.2mm dashed #bbb;' : ''}
-            }
-            .label-sticker + .label-sticker {
-              ${isThermal ? 'break-before: page !important; page-break-before: always !important;' : ''}
             }
             .header {
               font-size: ${headerFontSize};
@@ -1063,7 +1085,7 @@ export const CreateBarcodeModal: React.FC<CreateBarcodeModalProps> = ({
 
                     <div className="mt-2.5 text-[10px] font-bold text-gray-500 text-center">
                       {settings.printerType === 'label'
-                        ? `Thermal Roll • 1 barcode per page (${currentSizeConfig.name})`
+                        ? `Thermal Roll • ${(currentSizeConfig.labelsPerRow || 1) > 1 ? `${currentSizeConfig.labelsPerRow} barcodes per page` : '1 barcode per page'} (${currentSizeConfig.name})`
                         : 'Regular Printer (A4 Sheet Layout)'}
                     </div>
                   </div>
