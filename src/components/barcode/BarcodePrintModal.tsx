@@ -190,12 +190,9 @@ export const BarcodePrintModal: React.FC<BarcodePrintModalProps> = ({
                   ? `
                   html, body {
                     width: ${(selectedPreset.widthMm * columns + gapMm * (columns - 1)).toFixed(2)}mm !important;
-                    height: ${selectedPreset.heightMm}mm !important;
                     max-width: ${(selectedPreset.widthMm * columns + gapMm * (columns - 1)).toFixed(2)}mm !important;
-                    max-height: ${selectedPreset.heightMm}mm !important;
                     margin: 0 !important;
                     padding: 0 !important;
-                    overflow: hidden !important;
                   }
                   `
                   : ''
