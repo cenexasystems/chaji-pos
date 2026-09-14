@@ -180,8 +180,25 @@ export const BarcodePrintModal: React.FC<BarcodePrintModalProps> = ({
             @page {
               ${
                 isThermal
-                  ? `size: ${(selectedPreset.widthMm * columns + gapMm * (columns - 1)).toFixed(2)}mm ${selectedPreset.heightMm}mm; margin: 0mm !important; marks: none !important;`
-                  : `size: A4 portrait; margin: 10mm !important;`
+                  ? `size: ${(selectedPreset.widthMm * columns + gapMm * (columns - 1)).toFixed(2)}mm ${selectedPreset.heightMm}mm; margin: 0;`
+                  : `size: A4 portrait; margin: 10mm;`
+              }
+            }
+            @media print {
+              ${
+                isThermal
+                  ? `
+                  html, body {
+                    width: ${(selectedPreset.widthMm * columns + gapMm * (columns - 1)).toFixed(2)}mm !important;
+                    height: ${selectedPreset.heightMm}mm !important;
+                    max-width: ${(selectedPreset.widthMm * columns + gapMm * (columns - 1)).toFixed(2)}mm !important;
+                    max-height: ${selectedPreset.heightMm}mm !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    overflow: hidden !important;
+                  }
+                  `
+                  : ''
               }
             }
             * {
