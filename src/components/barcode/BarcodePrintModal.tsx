@@ -20,14 +20,18 @@ type LabelSizePreset = {
   name: string
   widthMm: number
   heightMm: number
+  labelsPerRow: number
+  horizontalGapMm: number
 }
 
 const getAvailablePresets = (): LabelSizePreset[] => {
   const sizes = getAllLabelSizes()
   return sizes.map((s) => ({
-    name: `${s.name} (${s.widthMm}mm × ${s.heightMm}mm)`,
+    name: `${s.name} (${s.widthMm}mm × ${s.heightMm}mm${s.labelsPerRow > 1 ? ` × ${s.labelsPerRow} across` : ''})`,
     widthMm: s.widthMm,
     heightMm: s.heightMm,
+    labelsPerRow: s.labelsPerRow || 1,
+    horizontalGapMm: s.horizontalGapMm || 0,
   }))
 }
 
@@ -43,7 +47,7 @@ export const BarcodePrintModal: React.FC<BarcodePrintModalProps> = ({
 }) => {
   const presets = getAvailablePresets()
   const [quantity, setQuantity] = useState<string>(String(defaultQuantity || 1))
-  const [selectedPreset, setSelectedPreset] = useState<LabelSizePreset>(presets[0] || { name: 'Thermal Standard', widthMm: 50, heightMm: 25 })
+  const [selectedPreset, setSelectedPreset] = useState<LabelSizePreset>(presets[0] || { name: 'Thermal Standard', widthMm: 50, heightMm: 25, labelsPerRow: 1, horizontalGapMm: 0 })
   const [copied, setCopied] = useState(false)
   const [printerType, setPrinterType] = useState<'label' | 'regular'>(() => {
     return getStoredBarcodeSettings().printerType || 'label'
@@ -144,13 +148,28 @@ export const BarcodePrintModal: React.FC<BarcodePrintModalProps> = ({
         </div>
       </div>
     `
-    const allStickersHtml = Array.from({ length: Math.max(1, validQuantity) })
-      .map(() => singleStickerHtml)
-      .join('')
+
+    // How many labels sit side-by-side across the physical roll/sheet width.
+    // A roll printer fed with a "2-up" / "3-up" die-cut roll MUST receive a page
+    // that is the full physical width (all columns), not a single label's width —
+    // otherwise the printer anchors the narrow page to one side of the roll and
+    // the other column(s) print blank, which is exactly the "right column only"
+    // pattern seen on mis-printed sheets.
+    const columns = isThermal ? Math.max(1, selectedPreset.labelsPerRow || 1) : 1
+    const gapMm = selectedPreset.horizontalGapMm || 0
+
+    const totalStickers = Math.max(1, validQuantity)
+    const rows: string[] = []
+    for (let i = 0; i < totalStickers; i += columns) {
+      const rowCount = Math.min(columns, totalStickers - i)
+      const rowHtml = Array.from({ length: rowCount }).map(() => singleStickerHtml).join('')
+      rows.push(`<div class="sticker-row">${rowHtml}</div>`)
+    }
+    const allStickersHtml = rows.join('')
 
     const bodyContent = isThermal
       ? allStickersHtml
-      : `<div class="a4-container">${allStickersHtml}</div>`
+      : `<div class="a4-container">${Array.from({ length: totalStickers }).map(() => singleStickerHtml).join('')}</div>`
 
     const html = `
       <!DOCTYPE html>
@@ -161,7 +180,7 @@ export const BarcodePrintModal: React.FC<BarcodePrintModalProps> = ({
             @page {
               ${
                 isThermal
-                  ? `size: ${selectedPreset.widthMm}mm ${selectedPreset.heightMm}mm; margin: 0mm !important; marks: none !important;`
+                  ? `size: ${(selectedPreset.widthMm * columns + gapMm * (columns - 1)).toFixed(2)}mm ${selectedPreset.heightMm}mm; margin: 0mm !important; marks: none !important;`
                   : `size: A4 portrait; margin: 10mm !important;`
               }
             }
@@ -184,6 +203,18 @@ export const BarcodePrintModal: React.FC<BarcodePrintModalProps> = ({
               align-content: flex-start;
               gap: 3mm 4mm;
             }
+            .sticker-row {
+              display: flex;
+              flex-direction: row;
+              align-items: flex-start;
+              gap: ${gapMm}mm;
+              width: ${(selectedPreset.widthMm * columns + gapMm * (columns - 1)).toFixed(2)}mm;
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+            }
+            .sticker-row + .sticker-row {
+              ${isThermal ? 'break-before: page !important; page-break-before: always !important;' : ''}
+            }
             .sticker {
               width: ${selectedPreset.widthMm}mm;
               height: ${selectedPreset.heightMm}mm;
@@ -197,13 +228,11 @@ export const BarcodePrintModal: React.FC<BarcodePrintModalProps> = ({
               text-align: center;
               overflow: hidden;
               box-sizing: border-box;
+              flex-shrink: 0;
               break-inside: avoid !important;
               page-break-inside: avoid !important;
               background: #fff;
               ${!isThermal ? 'border: 0.2mm dashed #bbb;' : ''}
-            }
-            .sticker + .sticker {
-              ${isThermal ? 'break-before: page !important; page-break-before: always !important;' : ''}
             }
             .header {
               width: 100%;
