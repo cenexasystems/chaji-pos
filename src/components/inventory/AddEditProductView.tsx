@@ -623,8 +623,9 @@ export const AddEditProductView: React.FC<{
 
       await fetchProducts(true)
       onStockUpdated?.()
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'An error occurred while saving'
+    } catch (err: any) {
+      console.error('Save Product Error:', err)
+      const msg = err.message || (err instanceof Error ? err.message : 'An error occurred while saving')
       setStatusMessage({ type: 'error', text: msg })
     } finally {
       setLoading(false)
