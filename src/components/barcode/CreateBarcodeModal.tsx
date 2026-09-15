@@ -59,6 +59,7 @@ export const CreateBarcodeModal: React.FC<CreateBarcodeModalProps> = ({
   const [settings, setSettings] = useState<BarcodeSettings>(getStoredBarcodeSettings())
   const [showSettingsDrawer, setShowSettingsDrawer] = useState(false)
   const [showSheetPreviewModal, setShowSheetPreviewModal] = useState(false)
+  const [updateStock, setUpdateStock] = useState(false)
 
   // Close on Escape key
   useEffect(() => {
@@ -327,22 +328,22 @@ export const CreateBarcodeModal: React.FC<CreateBarcodeModalProps> = ({
     setStatusMessage(null)
 
     try {
-      // Process all queued items sequentially or in parallel
       for (const item of selectedItems) {
         await barcodeService.receiveStockWithBarcode({
           product_id: item.productId,
           variant_id: item.variantId || null,
-          quantity_received: item.noOfLabels,
+          quantity_received: updateStock ? item.noOfLabels : 0,
           unit_cost: item.costPrice || null,
           custom_barcode: item.barcodeValue,
-          note: `Received via Barcode Generator (${item.noOfLabels} labels)`,
+          note: updateStock ? `Received via Barcode Generator (${item.noOfLabels} labels)` : 'Barcode assigned',
           created_by_name: 'Admin',
         })
       }
 
+      await fetchProducts(true)
       setStatusMessage({
         type: 'success',
-        text: `Successfully generated barcodes & added stock for ${selectedItems.length} items (${totalLabelsNeeded} total units)!`,
+        text: `Successfully generated barcodes for ${selectedItems.length} items (${totalLabelsNeeded} labels)${updateStock ? ' and updated stock' : ''}!`,
       })
 
       onSuccess?.()
@@ -1280,6 +1281,21 @@ export const CreateBarcodeModal: React.FC<CreateBarcodeModalProps> = ({
             </button>
 
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              <label className="flex items-center gap-1.5 mr-2 cursor-pointer" title="Check this to automatically increase stock by the number of labels printed.">
+                <input
+                  type="checkbox"
+                  checked={updateStock}
+                  onChange={(e) => setUpdateStock(e.target.checked)}
+                  className="w-3.5 h-3.5 rounded border-gray-300 text-[#0A0A0A] focus:ring-[#0A0A0A] cursor-pointer"
+                />
+                <span className="text-[11px] font-bold text-gray-700 select-none hidden sm:inline">
+                  Update Stock
+                </span>
+                <span className="text-[11px] font-bold text-gray-700 select-none sm:hidden">
+                  Stock+
+                </span>
+              </label>
+
               {queue.length > 0 && (
                 <button
                   type="button"
@@ -1299,12 +1315,12 @@ export const CreateBarcodeModal: React.FC<CreateBarcodeModalProps> = ({
                 {generating ? (
                   <>
                     <span className="w-3.5 h-3.5 border-2 border-[#D4AF37]/30 border-t-[#D4AF37] rounded-full animate-spin inline-block" />
-                    <span className="hidden sm:inline">Receiving Stock &amp; Generating...</span>
-                    <span className="sm:hidden">Adding...</span>
+                    <span className="hidden sm:inline">Generating...</span>
+                    <span className="sm:hidden">Gen...</span>
                   </>
                 ) : (
                   <>
-                    <Printer size={15} /> <span>Generate &amp; Add ({totalLabelsNeeded})</span>
+                    <Printer size={15} /> <span>Generate &amp; Print ({totalLabelsNeeded})</span>
                   </>
                 )}
               </button>
