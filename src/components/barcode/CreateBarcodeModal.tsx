@@ -24,6 +24,7 @@ import {
 import { BRAND_EN } from '../../lib/brand'
 import { barcodeService } from '../../services/barcodeService'
 import { fetchVariantsByProduct, type ProductVariant } from '../../services/variantService'
+import { useProductStore } from '../../store/store'
 import { BarcodeSettingsDrawer } from './BarcodeSettingsDrawer'
 import { BarcodeSheetPreviewModal } from './BarcodeSheetPreviewModal'
 
@@ -55,6 +56,8 @@ export const CreateBarcodeModal: React.FC<CreateBarcodeModalProps> = ({
   preselectedVariantId,
   onSuccess,
 }) => {
+  const fetchProducts = useProductStore((state) => state.fetchProducts)
+
   // Settings
   const [settings, setSettings] = useState<BarcodeSettings>(getStoredBarcodeSettings())
   const [showSettingsDrawer, setShowSettingsDrawer] = useState(false)
