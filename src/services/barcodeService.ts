@@ -80,10 +80,11 @@ export const barcodeService = {
    * Lookup barcode value in registry and resolve product + variant info.
    */
   async lookupBarcode(barcodeValue: string): Promise<BarcodeRegistryRecord | null> {
-    const cleanValue = barcodeValue.trim()
+    // Normalize to uppercase so hardware scanners emitting lowercase still match
+    const cleanValue = (barcodeValue ?? '').trim().toUpperCase()
     if (!cleanValue) return null
 
-    // 1. Direct registry lookup
+    // 1. Direct registry lookup (case-insensitive via ilike)
     const { data, error } = await supabase
       .from('barcode_registry')
       .select(`
@@ -91,7 +92,7 @@ export const barcodeService = {
         product:products (id, name, name_ta, price, offer_price, image_url, category),
         variant:product_variants (id, variant_name, price, stock, sku)
       `)
-      .eq('barcode_value', cleanValue)
+      .ilike('barcode_value', cleanValue)
       .eq('is_active', true)
       .maybeSingle()
 
@@ -110,11 +111,11 @@ export const barcodeService = {
       } as BarcodeRegistryRecord
     }
 
-    // 2. Fallback: Check product_variants.barcode
+    // 2. Fallback: Check product_variants.barcode (case-insensitive)
     const { data: varData } = await supabase
       .from('product_variants')
       .select('id, product_id, variant_name, price, stock, sku, barcode, product:products (id, name, name_ta, price, offer_price, image_url, category)')
-      .eq('barcode', cleanValue)
+      .ilike('barcode', cleanValue)
       .maybeSingle()
 
     if (varData) {
@@ -140,11 +141,11 @@ export const barcodeService = {
       } as BarcodeRegistryRecord
     }
 
-    // 3. Fallback: Check products.barcode
+    // 3. Fallback: Check products.barcode (case-insensitive)
     const { data: prodData } = await supabase
       .from('products')
       .select('id, name, name_ta, price, offer_price, image_url, category, barcode, stock_quantity')
-      .eq('barcode', cleanValue)
+      .ilike('barcode', cleanValue)
       .maybeSingle()
 
     if (prodData) {

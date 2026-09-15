@@ -14,6 +14,7 @@ import { supabase } from '../../lib/supabase'
 import { useProductStore, type Product } from '../../store/store'
 import { fetchVariantsByProduct } from '../../services/variantService'
 import { inventoryService, type CategoryRecord } from '../../services/inventoryService'
+import { normalizeBarcode } from '../../lib/barcode'
 
 export const STANDARD_LETTER_SIZES = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', 'Free Size'] as const
 export const STANDARD_NUMERIC_SIZES = ['28', '30', '32', '34', '36', '38', '40', '42', '44', '46', '48'] as const
@@ -350,15 +351,15 @@ export const AddEditProductView: React.FC<{
             })
           }
 
-          if (barcode.trim()) {
+          if (normalizeBarcode(barcode)) {
             await supabase.from('barcode_registry').upsert(
               {
-                barcode: barcode.trim(),
+                barcode_value: normalizeBarcode(barcode),
                 product_id: selectedProductId,
                 variant_id: null,
                 is_active: true,
               },
-              { onConflict: 'barcode' }
+              { onConflict: 'barcode_value' }
             )
           }
 
@@ -500,15 +501,15 @@ export const AddEditProductView: React.FC<{
 
           if (insErr || !newProd) throw insErr || new Error('Failed to create product')
 
-          if (barcode.trim()) {
+          if (normalizeBarcode(barcode)) {
             await supabase.from('barcode_registry').upsert(
               {
-                barcode: barcode.trim(),
+                barcode_value: normalizeBarcode(barcode),
                 product_id: newProd.id,
                 variant_id: null,
                 is_active: true,
               },
-              { onConflict: 'barcode' }
+              { onConflict: 'barcode_value' }
             )
           }
 
@@ -585,15 +586,15 @@ export const AddEditProductView: React.FC<{
               .select('id')
               .single()
 
-            if (createdVar && v.customBarcode?.trim()) {
+            if (createdVar && normalizeBarcode(v.customBarcode)) {
               await supabase.from('barcode_registry').upsert(
                 {
-                  barcode: v.customBarcode.trim(),
+                  barcode_value: normalizeBarcode(v.customBarcode),
                   product_id: newProd.id,
                   variant_id: createdVar.id,
                   is_active: true,
                 },
-                { onConflict: 'barcode' }
+                { onConflict: 'barcode_value' }
               )
             }
 

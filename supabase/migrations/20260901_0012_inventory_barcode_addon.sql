@@ -152,7 +152,7 @@ BEGIN
   ELSE
     v_is_new_barcode := TRUE;
     v_movement_type := 'INITIAL_BARCODE_STOCK';
-    v_barcode_value := COALESCE(NULLIF(BTRIM(p_custom_barcode), ''), public.generate_barcode_value(v_entity_type));
+    v_barcode_value := COALESCE(NULLIF(UPPER(BTRIM(p_custom_barcode)), ''), public.generate_barcode_value(v_entity_type));
 
     INSERT INTO public.barcode_registry (
       barcode_value, entity_type, product_id, variant_id, is_active, created_by_name

@@ -12,6 +12,7 @@ import { isSupabaseConfigured, supabase } from '../lib/supabase'
 import { useProductStore, useVariantStore, useAdminAuthStore, type Product } from '../store/store'
 import { useNavigationStore } from '../store/navigationStore'
 import { barcodeService } from '../services/barcodeService'
+import { normalizeBarcode } from '../lib/barcode'
 import { Invoice } from '../components/Invoice'
 import CatalogModal from '../components/CatalogModal'
 import { invoicePdfFile } from '../lib/invoicePdf'
@@ -419,7 +420,7 @@ export default function Pos(props: PosProps = {}) {
   const setExternalScannedCode = useNavigationStore((s) => s.setExternalScannedCode)
 
   const processIncomingCode = useCallback(async (codeToProcess: string) => {
-    const clean = codeToProcess.trim()
+    const clean = normalizeBarcode(codeToProcess)
     if (!clean) return
     try {
       const record = await barcodeService.lookupBarcode(clean)

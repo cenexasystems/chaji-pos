@@ -1,5 +1,10 @@
 import JsBarcode from 'jsbarcode'
 
+/** Normalize any scanned or user-entered barcode to a consistent UPPERCASE trimmed string. */
+export const normalizeBarcode = (code: string | null | undefined): string => {
+  return (code ?? '').trim().toUpperCase()
+}
+
 export interface LabelSizeConfig {
   id: string
   name: string
