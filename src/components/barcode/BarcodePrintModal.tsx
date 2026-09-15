@@ -149,12 +149,6 @@ export const BarcodePrintModal: React.FC<BarcodePrintModalProps> = ({
       </div>
     `
 
-    // How many labels sit side-by-side across the physical roll/sheet width.
-    // A roll printer fed with a "2-up" / "3-up" die-cut roll MUST receive a page
-    // that is the full physical width (all columns), not a single label's width —
-    // otherwise the printer anchors the narrow page to one side of the roll and
-    // the other column(s) print blank, which is exactly the "right column only"
-    // pattern seen on mis-printed sheets.
     const columns = isThermal ? Math.max(1, selectedPreset.labelsPerRow || 1) : 1
     const gapMm = selectedPreset.horizontalGapMm || 0
 
@@ -163,13 +157,19 @@ export const BarcodePrintModal: React.FC<BarcodePrintModalProps> = ({
     for (let i = 0; i < totalStickers; i += columns) {
       const rowCount = Math.min(columns, totalStickers - i)
       const rowHtml = Array.from({ length: rowCount }).map(() => singleStickerHtml).join('')
-      rows.push(`<div class="sticker-row">${rowHtml}</div>`)
+      
+      if (isThermal) {
+        // Wrap each row in a discrete page container to force hardware gap sensor alignment
+        rows.push(`<div class="page-wrapper"><div class="sticker-row">${rowHtml}</div></div>`)
+      } else {
+        rows.push(`<div class="sticker-row">${rowHtml}</div>`)
+      }
     }
     const allStickersHtml = rows.join('')
 
     const bodyContent = isThermal
       ? allStickersHtml
-      : `<div class="a4-container">${Array.from({ length: totalStickers }).map(() => singleStickerHtml).join('')}</div>`
+      : `<div class="a4-container">${allStickersHtml}</div>`
 
     const html = `
       <!DOCTYPE html>
@@ -189,10 +189,15 @@ export const BarcodePrintModal: React.FC<BarcodePrintModalProps> = ({
                 isThermal
                   ? `
                   html, body {
-                    width: ${(selectedPreset.widthMm * columns + gapMm * (columns - 1)).toFixed(2)}mm !important;
-                    max-width: ${(selectedPreset.widthMm * columns + gapMm * (columns - 1)).toFixed(2)}mm !important;
                     margin: 0 !important;
                     padding: 0 !important;
+                  }
+                  .page-wrapper {
+                    width: ${(selectedPreset.widthMm * columns + gapMm * (columns - 1)).toFixed(2)}mm !important;
+                    height: ${selectedPreset.heightMm}mm !important;
+                    overflow: hidden !important;
+                    page-break-after: always !important;
+                    break-after: page !important;
                   }
                   `
                   : ''
@@ -217,24 +222,27 @@ export const BarcodePrintModal: React.FC<BarcodePrintModalProps> = ({
               align-content: flex-start;
               gap: 3mm 4mm;
             }
+            .page-wrapper {
+              display: block;
+            }
             .sticker-row {
               display: flex;
               flex-direction: row;
-              align-items: flex-start;
-              gap: ${gapMm}mm;
+              align-items: center;
+              justify-content: ${isThermal ? 'space-between' : 'flex-start'};
+              gap: ${isThermal ? '0' : gapMm + 'mm'};
               width: ${(selectedPreset.widthMm * columns + gapMm * (columns - 1)).toFixed(2)}mm;
+              height: ${isThermal ? selectedPreset.heightMm + 'mm' : 'auto'};
               break-inside: avoid !important;
               page-break-inside: avoid !important;
-            }
-            .sticker-row + .sticker-row {
-              ${isThermal ? 'break-before: page !important; page-break-before: always !important;' : ''}
             }
             .sticker {
               width: ${selectedPreset.widthMm}mm;
               height: ${selectedPreset.heightMm}mm;
               max-width: ${selectedPreset.widthMm}mm;
               max-height: ${selectedPreset.heightMm}mm;
-              padding: ${stickerPadding};
+              /* Increased horizontal padding to protect text from physical printer misalignment */
+              padding: ${isSmall ? '0.8mm 2mm' : '1.2mm 2.5mm'};
               display: flex;
               flex-direction: column;
               justify-content: space-between;
@@ -243,8 +251,6 @@ export const BarcodePrintModal: React.FC<BarcodePrintModalProps> = ({
               overflow: hidden;
               box-sizing: border-box;
               flex-shrink: 0;
-              break-inside: avoid !important;
-              page-break-inside: avoid !important;
               background: #fff;
               ${!isThermal ? 'border: 0.2mm dashed #bbb;' : ''}
             }
