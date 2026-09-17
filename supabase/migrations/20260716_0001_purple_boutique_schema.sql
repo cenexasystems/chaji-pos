@@ -72,7 +72,8 @@ CREATE TABLE IF NOT EXISTS public.products (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS products_category_name_unique
-  ON public.products (category_id, LOWER(BTRIM(name)));
+  ON public.products (category_id, LOWER(BTRIM(name)))
+  WHERE is_active = true;
 
 CREATE TABLE IF NOT EXISTS public.product_variants (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -97,7 +98,8 @@ CREATE TABLE IF NOT EXISTS public.product_variants (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS product_variants_product_name_unique
-  ON public.product_variants (product_id, LOWER(BTRIM(variant_name)));
+  ON public.product_variants (product_id, LOWER(BTRIM(variant_name)))
+  WHERE is_active = true;
 
 CREATE TABLE IF NOT EXISTS public.coupons (
   id BIGSERIAL PRIMARY KEY,

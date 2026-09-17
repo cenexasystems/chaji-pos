@@ -626,7 +626,18 @@ export const AddEditProductView: React.FC<{
       onStockUpdated?.()
     } catch (err: any) {
       console.error('Save Product Error:', err)
-      const msg = err.message || (err instanceof Error ? err.message : 'An error occurred while saving')
+      let msg = err.message || (err instanceof Error ? err.message : 'An error occurred while saving')
+      
+      if (msg.includes('products_category_name_unique')) {
+        msg = 'A product with this name already exists in the selected category.'
+      } else if (msg.includes('product_variants_product_name_unique')) {
+        msg = 'A variant with this name already exists for this product.'
+      } else if (msg.includes('barcode_registry_barcode_value_key') || msg.includes('duplicate key value violates unique constraint')) {
+        if (msg.includes('barcode')) {
+          msg = 'This barcode is already registered to another item.'
+        }
+      }
+
       setStatusMessage({ type: 'error', text: msg })
     } finally {
       setLoading(false)
