@@ -2827,18 +2827,18 @@ export default function Dashboard() {
                               </div>
                               <p className="text-[14px] font-black text-emerald-700">{formatCurrency(p.revenue)}</p>
                             </div>
-                            <div className="mt-3 grid grid-cols-2 gap-3 text-[13px]">
-                              <div>
-                                <p className="text-[#9BAB9A] uppercase text-[11px] font-black">Qty Sold</p>
-                                <p className="font-bold text-[#111111]">{Math.round(p.qty)}</p>
+                            <div className="mt-3 grid grid-cols-3 gap-3 text-[13px]">
+                              <div className="flex flex-col justify-between">
+                                <p className="text-[#9BAB9A] uppercase text-[11px] font-black leading-tight">Qty Sold</p>
+                                <p className="font-bold text-[#111111] mt-1">{Math.round(p.qty)}</p>
                               </div>
-                              <div>
-                                <p className="text-[#9BAB9A] uppercase text-[11px] font-black">Bills</p>
-                                <p className="font-bold text-[#111111]">{p.billCount}</p>
+                              <div className="flex flex-col justify-between">
+                                <p className="text-[#9BAB9A] uppercase text-[11px] font-black leading-tight">Bills</p>
+                                <p className="font-bold text-[#111111] mt-1">{p.billCount}</p>
                               </div>
-                              <div>
-                                <p className="text-[#9BAB9A] uppercase text-[11px] font-black">Avg Revenue/Bill</p>
-                                <p className="font-bold text-[#111111]">{formatCurrency(p.billCount > 0 ? p.revenue / p.billCount : 0)}</p>
+                              <div className="flex flex-col justify-between">
+                                <p className="text-[#9BAB9A] uppercase text-[11px] font-black leading-tight">Avg Revenue/Bill</p>
+                                <p className="font-bold text-[#111111] mt-1">{formatCurrency(p.billCount > 0 ? p.revenue / p.billCount : 0)}</p>
                               </div>
                             </div>
                           </div>

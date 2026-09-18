@@ -319,15 +319,31 @@ export async function completeAdvanceOrder(
         p_remarks: remarks 
       })
       if (error) {
-        throw new Error(error.message || JSON.stringify(error))
+        if (error.message?.includes('already generated') || error.message?.includes('already completed')) {
+          // Self-heal: order was already completed with invoice
+          const { data: existing } = await supabase.from('advance_orders').select('*').eq('id', orderId).maybeSingle()
+          if (existing && (existing.invoice_number || existing.completed_order_id)) {
+            result = {
+              order_id: existing.completed_order_id || existing.id,
+              invoice_no: existing.invoice_number || 'INV-COMPLETED',
+              completed_at: existing.completed_at || new Date().toISOString()
+            }
+          } else {
+            throw new Error('This order has already been completed.')
+          }
+        } else {
+          throw new Error(error.message || JSON.stringify(error))
+        }
       }
       if (data) {
         const row = Array.isArray(data) ? data[0] : data
         result = row as { order_id: string; invoice_no: string; completed_at: string }
       }
     } catch (err: unknown) {
-      alert(`Supabase Backend Error: ${err instanceof Error ? err.message : String(err)}`)
-      throw err
+      if (!result) {
+        alert(`Supabase Backend Error: ${err instanceof Error ? err.message : String(err)}`)
+        throw err
+      }
     }
   }
 

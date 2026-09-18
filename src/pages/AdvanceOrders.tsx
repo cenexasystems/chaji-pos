@@ -184,6 +184,14 @@ export default function AdvanceOrders({ onOrderCompleted }: AdvanceOrdersProps =
   }
 
   const changeStatus = async (order: AdvanceOrder, status: AdvanceStatus) => {
+    if (order.status === 'cancelled') {
+      setError('A cancelled order cannot be modified.')
+      return
+    }
+    if (order.status === 'completed' || order.invoice_number || order.completed_order_id) {
+      setError('This order is already completed and has an official invoice.')
+      return
+    }
     if (status === 'completed') { setPaymentOrder(order); return }
     try { const updated = await updateAdvanceStatus(order.id, status); setOrders(rows => rows.map(row => row.id === order.id ? updated : row)); if (selected?.id === order.id) void openDetails(updated) } catch (err) { setError(err instanceof Error ? err.message : 'Unable to update status') }
   }
@@ -308,8 +316,9 @@ export default function AdvanceOrders({ onOrderCompleted }: AdvanceOrdersProps =
                   <td className="px-4 py-3.5 align-middle whitespace-nowrap">
                     <select
                       value={order.status}
+                      disabled={order.status === 'completed' || order.status === 'cancelled' || !!order.invoice_number || !!order.completed_order_id}
                       onChange={e => void changeStatus(order, e.target.value as AdvanceStatus)}
-                      className={`rounded-xl border px-2.5 py-1.5 text-xs font-black outline-none shadow-xs transition-colors cursor-pointer ${STATUS_STYLES[order.status]}`}
+                      className={`rounded-xl border px-2.5 py-1.5 text-xs font-black outline-none shadow-xs transition-colors cursor-pointer disabled:opacity-80 disabled:cursor-not-allowed ${STATUS_STYLES[order.status]}`}
                     >
                       <option value="pending_deposit">Pending Deposit</option>
                       <option value="waiting_final_payment">Waiting for Final Payment</option>
@@ -320,8 +329,12 @@ export default function AdvanceOrders({ onOrderCompleted }: AdvanceOrdersProps =
                   </td>
                   <td className="px-4 py-3.5 align-middle whitespace-nowrap">
                     <div className="flex items-center gap-1.5">
-                      {/* Receive Balance Button (if balance is due) */}
-                      {order.status !== 'completed' && order.status !== 'cancelled' && (
+                      {/* Receive Balance Button (strictly when no invoice exists, not completed, not cancelled, and pending/ready) */}
+                      {!order.invoice_number &&
+                        !order.completed_order_id &&
+                        order.status !== 'completed' &&
+                        order.status !== 'cancelled' &&
+                        ['pending_deposit', 'waiting_final_payment', 'ready_for_delivery'].includes(order.status) && (
                         <button
                           type="button"
                           onClick={() => setPaymentOrder(order)}

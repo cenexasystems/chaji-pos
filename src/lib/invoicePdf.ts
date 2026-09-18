@@ -173,30 +173,29 @@ export async function invoicePdfFileFromElement(
   invoiceNo: string,
 ): Promise<File> {
   const formattedNo = formatInvoiceNo(invoiceNo)
-  await document.fonts?.ready
-
   const invoiceRoot = (element.querySelector('#invoice-print-root') as HTMLElement) || element
-  const baseWidth = invoiceRoot.offsetWidth || element.offsetWidth || 680
-  
-  // Calculate exact A4 ratio height based on width so it fits perfectly on 1 page
-  const targetMinHeight = Math.round(baseWidth * (297 / 210))
-
-  const prevElementMinHeight = element.style.minHeight
-  const prevRootMinHeight = invoiceRoot.style.minHeight
-
-  element.style.minHeight = `${targetMinHeight}px`
-  if (invoiceRoot !== element) {
-    invoiceRoot.style.minHeight = `${targetMinHeight}px`
-  }
+  const canonicalWidth = 680
+  const targetMinHeight = Math.round(canonicalWidth * (297 / 210)) // 962px (exact A4 ratio)
 
   try {
-    const canvas = await html2canvas(element, {
+    const canvas = await html2canvas(invoiceRoot, {
       backgroundColor: '#ffffff',
       scale: 2,
       useCORS: true,
       logging: false,
-      windowWidth: element.scrollWidth,
-      windowHeight: Math.max(element.scrollHeight, targetMinHeight),
+      windowWidth: 1024,
+      onclone: (_clonedDoc, clonedElement) => {
+        const clonedInvoice =
+          clonedElement.id === 'invoice-print-root'
+            ? clonedElement
+            : (clonedElement.querySelector('#invoice-print-root') as HTMLElement) || clonedElement
+        clonedInvoice.style.width = `${canonicalWidth}px`
+        clonedInvoice.style.minWidth = `${canonicalWidth}px`
+        clonedInvoice.style.maxWidth = `${canonicalWidth}px`
+        clonedInvoice.style.minHeight = `${targetMinHeight}px`
+        clonedInvoice.style.boxSizing = 'border-box'
+        clonedInvoice.style.margin = '0 auto'
+      },
     })
 
     const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' })
@@ -205,7 +204,7 @@ export async function invoicePdfFileFromElement(
     const imageHeight = (canvas.height * pageWidth) / canvas.width
     const image = canvas.toDataURL('image/png')
 
-    if (imageHeight <= pageHeight + 10) {
+    if (imageHeight <= pageHeight + 5) {
       doc.addImage(image, 'PNG', 0, 0, pageWidth, pageHeight, undefined, 'FAST')
     } else {
       let offset = 0
@@ -219,10 +218,8 @@ export async function invoicePdfFileFromElement(
     }
 
     return new File([doc.output('blob')], `Invoice-${formattedNo}.pdf`, { type: 'application/pdf' })
-  } finally {
-    element.style.minHeight = prevElementMinHeight
-    if (invoiceRoot !== element) {
-      invoiceRoot.style.minHeight = prevRootMinHeight
-    }
+  } catch (error) {
+    console.error('Failed to generate invoice PDF from element:', error)
+    throw error
   }
 }
