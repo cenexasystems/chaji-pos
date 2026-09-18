@@ -110,6 +110,23 @@ const normalizeOrder = (row: Record<string, unknown>): AdvanceOrder => ({
 
 const rpcRow = (data: unknown) => (Array.isArray(data) ? data[0] : data) as Record<string, unknown>
 
+export async function deleteAdvanceOrder(orderId: string): Promise<void> {
+  if (isSupabaseConfigured) {
+    const { error } = await supabase.from('advance_orders').delete().eq('id', orderId)
+    if (error) throw new Error(error.message)
+  }
+  
+  // Clean up local storage
+  const localOrders = loadLocalOrders().filter(o => o.id !== orderId)
+  saveLocalOrders(localOrders)
+  
+  const localTimeline = loadLocalTimeline().filter(t => t.advance_order_id !== orderId)
+  saveLocalTimeline(localTimeline)
+  
+  const localPayments = loadLocalPayments().filter(p => p.advance_order_id !== orderId)
+  saveLocalPayments(localPayments)
+}
+
 export async function listAdvanceOrders(): Promise<AdvanceOrder[]> {
   const local = loadLocalOrders()
   if (isSupabaseConfigured) {

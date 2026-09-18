@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { createPortal } from 'react-dom'
-import { CalendarDays, CheckCircle2, Clock3, Download, Eye, FileText, MessageCircle, PackageCheck, Printer, RefreshCw, Search, X } from 'lucide-react'
+import { CalendarDays, CheckCircle2, Clock3, Download, Eye, FileText, MessageCircle, PackageCheck, Printer, RefreshCw, Search, X, Trash2 } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { formatCurrency } from '../lib/retail'
 import { invoicePdfFile } from '../lib/invoicePdf'
@@ -10,7 +10,7 @@ import { toWhatsAppUrl } from '../lib/phone'
 import { advanceReceiptPdf, downloadFile, printAdvanceReceipt } from '../lib/advanceReceipt'
 import { useAdminAuthStore, useProductStore } from '../store/store'
 import {
-  addAdvanceEvent, completeAdvanceOrder, createAdvanceOrder, getAdvanceOrderHistory, listAdvanceOrders, updateAdvanceStatus,
+  addAdvanceEvent, completeAdvanceOrder, createAdvanceOrder, getAdvanceOrderHistory, listAdvanceOrders, updateAdvanceStatus, deleteAdvanceOrder,
   type AdvanceOrder, type AdvancePayment, type AdvancePaymentMethod, type AdvanceStatus, type AdvanceTimeline,
 } from '../services/advanceOrderService'
 
@@ -72,6 +72,18 @@ export default function AdvanceOrders({ onOrderCompleted }: AdvanceOrdersProps =
     try { setOrders(await listAdvanceOrders()) } catch (err) { setError(err instanceof Error ? err.message : 'Unable to load advance orders') } finally { setLoading(false) }
   }, [])
   useEffect(() => { void load() }, [load])
+
+  const handleDeleteOrder = async (orderId: string, orderName: string) => {
+    if (!window.confirm(`Are you sure you want to delete advance order "${orderName}"? This action cannot be undone.`)) return
+    try {
+      await deleteAdvanceOrder(orderId)
+      setOrders(orders => orders.filter(o => o.id !== orderId))
+      setNotice('Order deleted successfully')
+      setTimeout(() => setNotice(''), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete order')
+    }
+  }
 
   // Fetch active coupons for the payment modal
   useEffect(() => {
@@ -328,6 +340,16 @@ export default function AdvanceOrders({ onOrderCompleted }: AdvanceOrdersProps =
                         title="View Details"
                       >
                         <Eye size={15}/>
+                      </button>
+
+                      {/* Delete Icon */}
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteOrder(order.id, order.customer_name)}
+                        className="w-8 h-8 rounded-lg bg-[#F4F2F6] hover:bg-red-100 text-red-600 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                        title="Delete Order"
+                      >
+                        <Trash2 size={15}/>
                       </button>
 
                       {/* Print Receipt / Invoice */}
