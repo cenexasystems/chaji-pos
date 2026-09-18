@@ -177,7 +177,9 @@ export async function invoicePdfFileFromElement(
 
   const invoiceRoot = (element.querySelector('#invoice-print-root') as HTMLElement) || element
   const baseWidth = invoiceRoot.offsetWidth || element.offsetWidth || 680
-  const targetMinHeight = Math.max(960, Math.round(baseWidth * (297 / 210)))
+  
+  // Calculate exact A4 ratio height based on width so it fits perfectly on 1 page
+  const targetMinHeight = Math.round(baseWidth * (297 / 210))
 
   const prevElementMinHeight = element.style.minHeight
   const prevRootMinHeight = invoiceRoot.style.minHeight

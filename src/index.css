@@ -402,8 +402,7 @@ button, a[role="button"] {
 
 /* Fix DigitalInvoice page: stop it being clipped to viewport on iOS */
 .digital-invoice-page {
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100%;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
