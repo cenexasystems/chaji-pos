@@ -140,7 +140,7 @@ function AppShell() {
   }, [fetchProducts, fetchVariants])
 
   return (
-    <div className="h-screen w-full max-w-[100vw] overflow-hidden bg-bgMain print:block print:h-auto print:overflow-visible">
+    <div className="ios-app-shell w-full max-w-[100vw] bg-bgMain print:block print:h-auto print:overflow-visible">
       <main className="h-full print:block print:h-auto print:min-h-0 print:overflow-visible">
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />

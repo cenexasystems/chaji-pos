@@ -159,50 +159,57 @@ export default function DigitalInvoice() {
       paymentMode: invoice.payment_mode || invoice.payment_method,
     })
 
-    const file = invoiceElementRef.current
-      ? await invoicePdfFileFromElement(invoiceElementRef.current, invoice.invoice_no)
-      : invoicePdfFile({
-      invoiceNo: invoice.invoice_no,
-      date: invoice.created_at,
-      customerName: invoice.customer_name,
-      phone: invoice.phone,
-      address: invoice.address,
-      items: invoiceItems as unknown as Array<Record<string, unknown>>,
-      subtotal,
-      shipping: Number(invoice.delivery_charge || 0),
-      total: Number(invoice.total || 0),
-      discountAmount: Number(invoice.discount_amount || 0),
-      manualDiscountAmount: Number(invoice.manual_discount_amount || 0),
-      gstAmount: Number(invoice.total_gst || invoice.gst_amount || 0),
-      couponCode: invoice.coupon_code || undefined,
-      paymentMode: invoice.payment_mode || invoice.payment_method || undefined,
-      })
+    // iOS Safari blocks window.open() inside async functions.
+    // We MUST open the WhatsApp window synchronously before any await.
+    const whatsappWindow = window.open(toWhatsAppUrl(invoice.phone, message), '_blank', 'noopener,noreferrer')
 
-    let downloadLink = ''
-    try {
-      downloadLink = await uploadInvoicePdf(file, invoice.invoice_no)
-    } catch (err) {
-      console.warn('Failed to upload invoice PDF:', err)
-    }
-
-    const whatsappMessage = downloadLink
-      ? `${message}\n\n📄 Download Invoice: ${downloadLink}`
-      : `${message}\n\nThe PDF was downloaded. Please attach it in this chat before sending.`
-
-    if (navigator.share && navigator.canShare?.({ files: [file] })) {
+    // Try Web Share API (native iOS share sheet) first
+    if (navigator.share && invoiceElementRef.current) {
       try {
-        await navigator.share({ files: [file], title: `Invoice ${invoice.invoice_no}`, text: whatsappMessage })
-        return
-      } catch { /* fall through */ }
+        const file = await invoicePdfFileFromElement(invoiceElementRef.current, invoice.invoice_no)
+        if (navigator.canShare?.({ files: [file] })) {
+          if (whatsappWindow) whatsappWindow.close() // Close the preemptive window if share works
+          await navigator.share({ files: [file], title: `Invoice ${invoice.invoice_no}`, text: message })
+          return
+        }
+      } catch { /* fall through to WhatsApp */ }
     }
 
-    const downloadUrl = URL.createObjectURL(file)
-    const link = document.createElement('a')
-    link.href = downloadUrl
-    link.download = file.name
-    link.click()
-    setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000)
-    window.open(toWhatsAppUrl(invoice.phone, whatsappMessage), '_blank', 'noopener,noreferrer')
+    // Upload PDF and update the already-opened WhatsApp window URL with download link
+    try {
+      const file = invoiceElementRef.current
+        ? await invoicePdfFileFromElement(invoiceElementRef.current, invoice.invoice_no)
+        : invoicePdfFile({
+            invoiceNo: invoice.invoice_no,
+            date: invoice.created_at,
+            customerName: invoice.customer_name,
+            phone: invoice.phone,
+            address: invoice.address,
+            items: invoiceItems as unknown as Array<Record<string, unknown>>,
+            subtotal,
+            shipping: Number(invoice.delivery_charge || 0),
+            total: Number(invoice.total || 0),
+            discountAmount: Number(invoice.discount_amount || 0),
+            manualDiscountAmount: Number(invoice.manual_discount_amount || 0),
+            gstAmount: Number(invoice.total_gst || invoice.gst_amount || 0),
+            couponCode: invoice.coupon_code || undefined,
+            paymentMode: invoice.payment_mode || invoice.payment_method || undefined,
+          })
+
+      let downloadLink = ''
+      try {
+        downloadLink = await uploadInvoicePdf(file, invoice.invoice_no)
+      } catch (err) {
+        console.warn('Failed to upload invoice PDF:', err)
+      }
+
+      if (downloadLink && whatsappWindow) {
+        const fullMessage = `${message}\n\n📄 Download Invoice: ${downloadLink}`
+        whatsappWindow.location.href = toWhatsAppUrl(invoice.phone, fullMessage)
+      }
+    } catch (err) {
+      console.warn('WhatsApp PDF share error:', err)
+    }
   }
 
   const printReceipt = () => {
@@ -228,30 +235,33 @@ export default function DigitalInvoice() {
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-[#f9faf6] font-sans pb-12 print:bg-white print:pb-0 print:h-auto print:min-h-0 print:overflow-visible print:m-0 print:p-0">
-      {/* Top action bar */}
-      <div className="bg-[#f9faf6] p-4 sticky top-0 z-50 print:hidden flex items-center justify-between max-w-4xl mx-auto">
-        <button onClick={handleBack} className="flex items-center gap-2 text-[#0A0A0A] hover:text-[#D4AF37] font-semibold text-sm transition-colors bg-white border border-[#E8D399] px-4 py-2 rounded-full shadow-sm cursor-pointer">
+    <div className="digital-invoice-page bg-[#f9faf6] font-sans print:bg-white print:overflow-visible print:m-0 print:p-0">
+      {/* Top action bar — uses position fixed so it always works on iOS regardless of scroll context */}
+      <div className="bg-[#f9faf6]/95 backdrop-blur-sm p-4 fixed top-0 left-0 right-0 z-50 print:hidden flex items-center justify-between safe-area-inset-top" style={{ paddingTop: 'max(16px, env(safe-area-inset-top))' }}>
+        <button onClick={handleBack} className="flex items-center gap-2 text-[#0A0A0A] hover:text-[#D4AF37] font-semibold text-sm transition-colors bg-white border border-[#E8D399] px-4 py-2 rounded-full shadow-sm cursor-pointer active:scale-95">
           <ArrowLeft size={16} /> Back
         </button>
         <div className="flex items-center gap-2">
           <button
             onClick={downloadPdf}
-            className="flex items-center gap-2 bg-[#0A0A0A] text-[#D4AF37] border border-[#D4AF37] px-5 py-2 rounded-full font-bold text-sm shadow-md hover:bg-[#1A1A1A] transition-colors cursor-pointer"
+            className="flex items-center gap-2 bg-[#0A0A0A] text-[#D4AF37] border border-[#D4AF37] px-4 py-2 rounded-full font-bold text-sm shadow-md hover:bg-[#1A1A1A] transition-colors cursor-pointer active:scale-95"
           >
-            <Printer size={16} /> PDF Invoice
+            <Printer size={16} /> <span className="hidden sm:inline">PDF Invoice</span><span className="sm:hidden">PDF</span>
           </button>
           <button
             onClick={shareViaWhatsApp}
-            className="flex items-center gap-2 bg-emerald-600 text-white px-5 py-2 rounded-full font-bold text-sm shadow-md hover:bg-emerald-700 transition-colors cursor-pointer"
+            className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-full font-bold text-sm shadow-md hover:bg-emerald-700 transition-colors cursor-pointer active:scale-95"
           >
             <MessageCircle size={16} /> WhatsApp
           </button>
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto mt-4 print:mt-0 print:mb-0 print:p-0 print:max-w-full px-2 sm:px-0">
-        <div ref={invoiceElementRef} className="bg-white shadow-xl rounded-2xl overflow-hidden print:shadow-none print:rounded-none border border-sand/20 print:border-none print:m-0 print:p-0 print:overflow-visible">
+      {/* Spacer to push content below fixed bar */}
+      <div className="h-16 print:hidden" style={{ height: 'max(64px, calc(64px + env(safe-area-inset-top)))' }} />
+
+      <div className="max-w-3xl mx-auto pb-12 print:mt-0 print:mb-0 print:p-0 print:max-w-full px-2 sm:px-0">
+        <div ref={invoiceElementRef} className="bg-white shadow-xl rounded-2xl print:shadow-none print:rounded-none border border-sand/20 print:border-none print:m-0 print:p-0">
           <Invoice
             invoiceNo={invoice.invoice_no}
             date={invoice.created_at}

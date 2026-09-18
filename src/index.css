@@ -350,3 +350,61 @@
     padding: 0 !important;
   }
 }
+
+/* ─── iOS Safari / WebKit Compatibility Fixes ─── */
+
+/* Root app shell: use dynamic viewport height so iOS toolbar doesn't clip content */
+.ios-app-shell {
+  /* Fallback for browsers that don't support dvh */
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  /* iOS Safari: allow touch scroll to propagate to children */
+  position: relative;
+}
+
+.ios-app-shell > main {
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Scrollable panels: enable momentum scrolling on iOS */
+.overflow-y-auto,
+.overflow-y-scroll,
+[data-scroll="ios"] {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+/* Table horizontal scroll on iOS touch devices */
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Fix sticky positioning in iOS Safari inside overflow:scroll containers */
+.sticky {
+  position: -webkit-sticky;
+  position: sticky;
+}
+
+/* iOS Safari: prevent buttons from being invisible/unclickable inside overflow containers */
+button, a[role="button"] {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Fix min-h for iOS — use dvh units where available */
+.min-h-screen {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Fix DigitalInvoice page: stop it being clipped to viewport on iOS */
+.digital-invoice-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+

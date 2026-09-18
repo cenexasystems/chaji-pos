@@ -298,8 +298,8 @@ export const CategoryManagerView: React.FC = () => {
               {categories.length === 0 ? 'No categories created yet.' : 'No matching categories found.'}
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[560px] text-left text-xs">
+            <div className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
+              <table className="w-full min-w-[480px] text-left text-xs">
                 <thead className="bg-[#FBFAF6] border-b border-gray-200 text-[10px] font-black uppercase tracking-wider text-gray-600">
                   <tr>
                     <th className="p-3 w-16 text-center">Order</th>
@@ -339,22 +339,22 @@ export const CategoryManagerView: React.FC = () => {
                         </span>
                       </td>
                       <td className="p-3 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
+                        <div className="flex items-center justify-end gap-2">
                           <button
                             type="button"
                             onClick={() => startEdit(cat)}
-                            className="p-1.5 rounded-lg border border-gray-200 text-gray-600 hover:text-black hover:bg-gray-100 transition-colors cursor-pointer"
+                            className="p-2.5 rounded-xl border border-gray-200 text-gray-600 hover:text-black hover:bg-gray-100 active:bg-gray-200 transition-colors cursor-pointer touch-manipulation"
                             title="Edit"
                           >
-                            <Edit2 size={13} />
+                            <Edit2 size={14} />
                           </button>
                           <button
                             type="button"
                             onClick={() => handleDelete(cat)}
-                            className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                            className="p-2.5 rounded-xl border border-gray-200 text-gray-400 hover:text-red-600 hover:bg-red-50 active:bg-red-100 transition-colors cursor-pointer touch-manipulation"
                             title="Delete"
                           >
-                            <Trash2 size={13} />
+                            <Trash2 size={14} />
                           </button>
                         </div>
                       </td>
