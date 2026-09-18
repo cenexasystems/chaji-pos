@@ -10,6 +10,35 @@ import { isUuid, normalizeStructuredOrderItem, formatInvoiceNo } from '../lib/re
 import { buildProfessionalWhatsAppMessage } from '../lib/whatsappMessage'
 import { toWhatsAppUrl } from '../lib/phone'
 
+function buildLookupCandidates(id: string): string[] {
+  const raw = decodeURIComponent(id || '').trim()
+  if (!raw) return []
+
+  const candidates = new Set<string>()
+
+  // 1. Stripped prefix (e.g. "INV00000030" -> "00000030") - highest priority because DB stores 8 digits without prefix
+  const stripped = raw.replace(/^(INV|PB)[-_ ]*/i, '').trim()
+  if (stripped) candidates.add(stripped)
+
+  // 2. Numeric digits padded to 8 digits
+  const digits = raw.replace(/\D/g, '')
+  if (digits) {
+    candidates.add(digits.padStart(8, '0'))
+    candidates.add(digits)
+    const unpadded = digits.replace(/^0+/, '')
+    if (unpadded) candidates.add(unpadded)
+  }
+
+  // 3. Raw and uppercase
+  candidates.add(raw)
+  candidates.add(raw.toUpperCase())
+
+  // 4. Formatted with INV prefix
+  candidates.add(formatInvoiceNo(raw))
+
+  return Array.from(candidates).filter(Boolean)
+}
+
 export default function DigitalInvoice() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -47,53 +76,111 @@ export default function DigitalInvoice() {
         return
       }
       try {
-        const identifier = decodeURIComponent(id || '').trim()
-        const formattedIdentifier = formatInvoiceNo(identifier)
-        const strippedIdentifier = identifier.replace(/^INV/i, '')
-
-        const tryRpc = async (invNo: string) => supabase.rpc('get_public_invoice_by_number', { p_invoice_no: invNo })
-
-        let rpcResult = await tryRpc(identifier)
-        if (!rpcResult.data || (Array.isArray(rpcResult.data) && rpcResult.data.length === 0)) {
-          if (strippedIdentifier && strippedIdentifier !== identifier) {
-             rpcResult = await tryRpc(strippedIdentifier)
-          }
-        }
-        if (!rpcResult.data || (Array.isArray(rpcResult.data) && rpcResult.data.length === 0)) {
-          if (formattedIdentifier && formattedIdentifier !== identifier && formattedIdentifier !== strippedIdentifier) {
-             rpcResult = await tryRpc(formattedIdentifier)
-          }
+        const rawId = decodeURIComponent(id || '').trim()
+        if (!rawId) {
+          throw new Error('Invoice not found')
         }
 
-        const { data: rpcData, error: rpcError } = rpcResult
-        let row = Array.isArray(rpcData) ? rpcData[0] : rpcData
+        const candidates = buildLookupCandidates(rawId)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let row: any = null
 
-        // Keep existing links working when the public-invoice RPC has not yet
-        // been applied to the target project.
-        if (!row || rpcError) {
-          const tryTable = async (invNo: string) => supabase.from('orders').select('*').eq('invoice_no', invNo).maybeSingle()
-          
-          let tableResult = await tryTable(identifier)
-          if (!tableResult.data && strippedIdentifier && strippedIdentifier !== identifier) {
-            tableResult = await tryTable(strippedIdentifier)
+        // 1. Try public RPC with candidates in priority order (00000030 tried first)
+        for (const candidate of candidates) {
+          try {
+            const { data, error: rpcErr } = await supabase.rpc('get_public_invoice_by_number', { p_invoice_no: candidate })
+            if (!rpcErr && data) {
+              const matched = Array.isArray(data) ? data[0] : data
+              if (matched && typeof matched === 'object' && ('id' in matched || 'invoice_no' in matched)) {
+                row = matched
+                break
+              }
+            }
+          } catch {
+            // continue
           }
-          if (!tableResult.data && formattedIdentifier && formattedIdentifier !== identifier && formattedIdentifier !== strippedIdentifier) {
-            tableResult = await tryTable(formattedIdentifier)
-          }
-          
-          row = tableResult.data
+        }
 
-          if (!row && isUuid(identifier)) {
+        // 2. Direct table query fallback on orders table (supports unauthenticated anon query)
+        if (!row) {
+          try {
+            const { data: tableData } = await supabase
+              .from('orders')
+              .select('*')
+              .in('invoice_no', candidates)
+              .limit(1)
+
+            if (tableData && tableData[0]) {
+              row = tableData[0]
+            }
+          } catch {
+            // continue
+          }
+        }
+
+        // 3. Fallback to UUID lookup if rawId is a valid UUID (e.g. opened from dashboard)
+        if (!row && isUuid(rawId)) {
+          try {
             const { data: idData } = await supabase
               .from('orders')
               .select('*')
-              .eq('id', identifier)
+              .eq('id', rawId)
               .maybeSingle()
-            row = idData
-          }
 
-          if (!row) throw new Error('Invoice not found')
+            if (idData) {
+              row = idData
+            }
+          } catch {
+            // continue
+          }
         }
+
+        // 4. Fallback to advance_orders table if referenced by deposit_id or invoice_number
+        if (!row) {
+          try {
+            const { data: advData } = await supabase
+              .from('advance_orders')
+              .select('*')
+              .or(`invoice_number.in.(${candidates.map(c => `"${c}"`).join(',')}),deposit_id.in.(${candidates.map(c => `"${c}"`).join(',')})`)
+              .limit(1)
+
+            if (advData && advData[0]) {
+              const adv = advData[0]
+              const advItems = Array.isArray(adv.products) && adv.products.length > 0
+                ? adv.products
+                : [{
+                    name: adv.product_name || 'Advance Order Item',
+                    quantity: 1,
+                    unit: 'piece',
+                    unit_type: 'unit',
+                    base_price: adv.total_amount,
+                    line_total: adv.total_amount,
+                  }]
+              row = {
+                id: adv.completed_order_id || adv.id,
+                invoice_no: adv.invoice_number || adv.deposit_id,
+                customer_name: adv.customer_name,
+                phone: adv.phone,
+                address: adv.address || '',
+                items: advItems,
+                total: adv.total_amount,
+                subtotal: adv.total_amount,
+                delivery_charge: 0,
+                discount_amount: 0,
+                manual_discount_amount: 0,
+                total_gst: 0,
+                gst_amount: 0,
+                status: adv.status,
+                payment_mode: adv.final_payment_method || 'Advance Payment',
+                created_at: adv.completed_at || adv.created_at,
+              }
+            }
+          } catch {
+            // continue
+          }
+        }
+
+        if (!row) throw new Error('Invoice not found')
 
         setInvoice(row)
       } catch (err: unknown) {

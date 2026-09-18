@@ -828,7 +828,7 @@ export default function Pos(props: PosProps = {}) {
       const effectiveBillingDate = billingDate.trim()
         ? new Date(billingDate).toISOString()
         : new Date().toISOString()
-      await supabase.from('orders').update({
+      const { error: updateErr } = await supabase.from('orders').update({
         subtotal,
         total,
         total_gst: totalGst,
@@ -842,6 +842,22 @@ export default function Pos(props: PosProps = {}) {
         reference_number: referenceNumber.trim(),
         billing_date: effectiveBillingDate,
       }).eq('id', created.orderId)
+
+      if (updateErr) {
+        console.warn('Post-order update warning:', updateErr)
+      }
+
+      // Explicit verification: confirm the order record actually exists in the database
+      // before transitioning to the completed bill state or allowing WhatsApp link send
+      const { data: verifiedOrder, error: verifyErr } = await supabase
+        .from('orders')
+        .select('id, invoice_no')
+        .eq('id', created.orderId)
+        .maybeSingle()
+
+      if (verifyErr || !verifiedOrder) {
+        throw new Error(`Invoice confirmation failed: could not verify order #${created.invoiceNo} was saved in the database.`)
+      }
       const createdInvoice: InvoiceSnap = {
         id: created.orderId,
         invoiceNo: created.invoiceNo,
@@ -1099,7 +1115,7 @@ export default function Pos(props: PosProps = {}) {
 
   // ══ MAIN POS SCREEN ══════════════════════════════════════════════════
   return (
-    <div data-embedded={embeddedMode} data-panel={mobilePanelView} className="flex flex-col h-full bg-[#FAFAFA] print:hidden overflow-y-auto overflow-x-hidden hide-scrollbar">
+    <div data-embedded={embeddedMode} data-panel={mobilePanelView} className="flex flex-col h-full bg-[#FAFAFA] print:hidden overflow-y-auto overflow-x-hidden hide-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
       {/* Header */}
       <div className="px-3 pt-3 pb-2.5 sm:px-4 sm:pt-4 md:px-6 md:pt-6 md:pb-4 shrink-0 flex flex-col gap-3 min-[480px]:flex-row min-[480px]:items-start min-[480px]:justify-between">
         <div className="min-w-0">
@@ -1147,10 +1163,10 @@ export default function Pos(props: PosProps = {}) {
       </div>
 
       {/* Main Content Split */}
-      <div className="flex flex-col lg:flex-row gap-4 sm:gap-5 md:gap-6 px-3 sm:px-4 md:px-6 pb-6 lg:h-[calc(100vh-120px)] lg:overflow-hidden">
+      <div className="flex flex-col lg:flex-row gap-4 sm:gap-5 md:gap-6 px-3 sm:px-4 md:px-6 pb-6 lg:h-[calc(100vh-120px)] lg:overflow-hidden" style={{ touchAction: 'pan-y' }}>
 
         {/* LEFT COLUMN (approx 68%) */}
-        <div className="flex-[2.1] flex flex-col gap-4 sm:gap-6 min-w-0 max-w-full lg:overflow-y-auto lg:pb-4 hide-scrollbar">
+        <div className="flex-[2.1] flex flex-col gap-4 sm:gap-6 min-w-0 max-w-full lg:overflow-y-auto lg:pb-4">
 
           {/* Customer Details Card */}
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-3.5 sm:p-4 md:p-5 shrink-0 min-w-0 max-w-full">
@@ -1284,7 +1300,7 @@ export default function Pos(props: PosProps = {}) {
             </div>
 
             {/* Table Body */}
-            <div className="flex-1 overflow-y-auto p-3 space-y-3 md:space-y-2">
+            <div className="flex-1 lg:overflow-y-auto p-3 space-y-3 md:space-y-2">
               {items.length === 0 && (
                 <div className="flex flex-col items-center justify-center h-full text-[#374151]/60">
                   <ShoppingBag size={40} className="mb-3 opacity-20" />
@@ -1447,8 +1463,8 @@ export default function Pos(props: PosProps = {}) {
         </div>
 
         {/* RIGHT COLUMN (approx 32%) */}
-        <div className="flex-[1] flex min-h-0 flex-col gap-6 sticky top-4 h-[calc(100vh-140px)] max-h-[calc(100vh-140px)]">
-          <div className="flex min-h-0 h-full max-h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-[#FBFAF6] shadow-sm">
+        <div className="flex-[1] flex min-h-0 flex-col gap-6 lg:sticky lg:top-4 lg:h-[calc(100vh-140px)] lg:max-h-[calc(100vh-140px)]">
+          <div className="flex min-h-0 lg:h-full lg:max-h-full flex-col lg:overflow-hidden rounded-2xl border border-gray-200 bg-[#FBFAF6] shadow-sm">
 
             {/* Header */}
             <div className="flex items-center justify-between p-3 border-b border-gray-200 bg-white shrink-0">
@@ -1463,7 +1479,7 @@ export default function Pos(props: PosProps = {}) {
             </div>
 
             {/* Content body */}
-            <div className="min-h-0 flex-1 overflow-y-auto bg-white p-3 space-y-2 hide-scrollbar">
+            <div className="min-h-0 flex-1 lg:overflow-y-auto bg-white p-3 space-y-2">
 
               {/* Info Table */}
               <div className="border border-gray-200 rounded-xl overflow-hidden text-[11px] font-bold">
