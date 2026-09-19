@@ -374,7 +374,13 @@
 .overflow-y-scroll,
 [data-scroll="ios"] {
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
+}
+
+/* Modals, dialogs, drawers, and overlay sheets: contain scroll to lock background page */
+.fixed .overflow-y-auto,
+.fixed .overflow-y-scroll,
+.modal-body {
+  overscroll-behavior: contain;
 }
 
 /* Table horizontal scroll on iOS touch devices */

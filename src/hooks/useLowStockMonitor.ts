@@ -45,8 +45,8 @@ export function useLowStockMonitor(enabled: boolean = true, role?: string | null
         const threshold = Number(p.low_stock_alert) > 0 ? Number(p.low_stock_alert) : 5
         const currentStock = Number(p.stock_quantity) || 0
 
-        // Only flag products that have active inventory running low (exclude 0 stock / empty inventory)
-        if (currentStock > 0 && currentStock <= threshold) {
+        // Alert for products running low or out of stock (currentStock <= threshold)
+        if (currentStock <= threshold) {
           flagged.push({
             id: `p-${p.id}`,
             name: p.name,
@@ -58,7 +58,7 @@ export function useLowStockMonitor(enabled: boolean = true, role?: string | null
         }
       }
 
-      // Check product variants (Only alert for actual variant inventory running low: 0 < stock <= threshold)
+      // Check product variants (alert for variants running low or out of stock)
       for (const v of variants || []) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const parentProd = v.products as any
@@ -75,7 +75,7 @@ export function useLowStockMonitor(enabled: boolean = true, role?: string | null
         const threshold = 5
         const currentStock = Number(v.stock) || 0
 
-        if (currentStock > 0 && currentStock <= threshold) {
+        if (currentStock <= threshold) {
           flagged.push({
             id: `v-${v.id}`,
             name: parentProd?.name ? `${parentProd.name}` : 'Product Variant',

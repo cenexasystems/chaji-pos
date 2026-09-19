@@ -59,7 +59,7 @@ export const InventoryTable: React.FC = () => {
 
       // Alert sound and modal when viewing inventory with low stock
       const lowStockFlagged = data
-        .filter((i) => i.stock > 0 && i.stock <= (i.low_stock_threshold || 5))
+        .filter((i) => i.is_active && i.stock <= (i.low_stock_threshold || 5))
         .map((i) => ({
           id: i.variant_id ? `v-${i.variant_id}` : `p-${i.product_id}`,
           name: i.name,

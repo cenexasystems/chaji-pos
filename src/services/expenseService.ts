@@ -489,22 +489,31 @@ export const expenseService = {
 
 // 6. CSV Ledger Export Utility
 export function exportExpensesToCSV(expenses: ExpenseRecord[]): void {
-  const headers = ['Date', 'Category', 'Description', 'Amount (INR)', 'Recorded By']
+  if (!Array.isArray(expenses) || expenses.length === 0) return
+
+  const headers = ['Date', 'Category', 'Description', 'Amount (INR)', 'Payment Mode', 'Recorded By']
   const rows = expenses.map((e) => [
-    e.expense_date,
-    `"${(e.category_name || 'Uncategorized').replace(/"/g, '""')}"`,
-    `"${(e.description || '').replace(/"/g, '""')}"`,
-    Number(e.amount || 0).toFixed(2),
-    `"${(e.recorded_by_name || 'Staff').replace(/"/g, '""')}"`,
+    String(e?.expense_date || ''),
+    `"${String(e?.category_name || 'Uncategorized').replace(/"/g, '""')}"`,
+    `"${String(e?.description ?? '').replace(/"/g, '""')}"`,
+    Number(e?.amount || 0).toFixed(2),
+    `"${String(e?.payment_mode || 'Cash').replace(/"/g, '""')}"`,
+    `"${String(e?.recorded_by_name || 'Staff').replace(/"/g, '""')}"`,
   ])
 
   const csvContent =
-    'data:text/csv;charset=utf-8,\uFEFF' +
-    [headers.join(','), ...rows.map((r) => r.join(','))].join('\n')
+    '\uFEFF' +
+    [headers.join(','), ...rows.map((r) => r.join(','))].join('\r\n')
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
-  link.href = encodeURI(csvContent)
-  link.download = `CHAJI-Expenses-${new Date().toISOString().slice(0, 10)}.csv`
+  link.href = url
+  link.setAttribute('download', `CHAJI-Expenses-${new Date().toISOString().slice(0, 10)}.csv`)
+  link.style.display = 'none'
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
+
