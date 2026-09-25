@@ -7,6 +7,7 @@ import { clearLocalOrders } from './lib/ordersFallback'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 import { LowStockAlarmModal } from './components/dashboard/LowStockAlarmModal'
 import { useLowStockMonitor } from './hooks/useLowStockMonitor'
+import Footer from './components/Footer'
 
 function lazyWithRetry<T extends React.ComponentType<any>>(
   factory: () => Promise<{ default: T }>
@@ -140,8 +141,8 @@ function AppShell() {
   }, [fetchProducts, fetchVariants])
 
   return (
-    <div className="ios-app-shell w-full max-w-[100vw] bg-bgMain print:block print:h-auto print:overflow-visible">
-      <main className="h-full print:block print:h-auto print:min-h-0 print:overflow-visible">
+    <div className="ios-app-shell flex flex-col w-full max-w-[100vw] bg-bgMain print:block print:h-auto print:overflow-visible">
+      <main className="flex-1 min-h-0 w-full overflow-hidden print:block print:h-auto print:min-h-0 print:overflow-visible">
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route
@@ -213,6 +214,8 @@ function AppShell() {
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </main>
+
+      <Footer />
 
       {/* Global Low Stock Sound & Visual Alarm for Admin and Staff Panels */}
       {hasStaffOrAdminAccess && <LowStockAlarmModal />}

@@ -361,7 +361,7 @@ export default function DigitalInvoice() {
   }
 
   return (
-    <div className="digital-invoice-page bg-[#f9faf6] font-sans print:bg-white print:overflow-visible print:m-0 print:p-0">
+    <div className="digital-invoice-page bg-[#f9faf6] font-sans print:bg-white print:overflow-visible print:m-0 print:p-0 h-full overflow-y-auto">
       {/* Top action bar — uses position fixed so it always works on iOS regardless of scroll context */}
       <div className="bg-[#f9faf6]/95 backdrop-blur-sm p-4 fixed top-0 left-0 right-0 z-50 print:hidden flex items-center justify-between safe-area-inset-top" style={{ paddingTop: 'max(16px, env(safe-area-inset-top))' }}>
         <button onClick={handleBack} className="flex items-center gap-2 text-[#0A0A0A] hover:text-[#D4AF37] font-semibold text-sm transition-colors bg-white border border-[#E8D399] px-4 py-2 rounded-full shadow-sm cursor-pointer active:scale-95">

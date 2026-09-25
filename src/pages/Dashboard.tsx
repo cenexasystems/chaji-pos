@@ -1654,11 +1654,11 @@ export default function Dashboard() {
       ]
 
   return (
-    <div className="admin-shell h-screen max-h-screen min-h-screen bg-bgMain flex flex-col lg:flex-row overflow-hidden">
+    <div className="admin-shell h-full max-h-full min-h-0 bg-bgMain flex flex-col lg:flex-row overflow-hidden">
       {/* Sidebar */}
       <aside
         className={[
-          'w-full bg-[#0A0A0A] text-white border-b lg:border-b-0 lg:border-r border-[#D4AF37]/20 flex flex-col shrink-0 h-auto lg:h-full lg:max-h-screen',
+          'w-full bg-[#0A0A0A] text-white border-b lg:border-b-0 lg:border-r border-[#D4AF37]/20 flex flex-col shrink-0 h-auto lg:h-full lg:max-h-full',
           'transition-[width] duration-300 ease-in-out overflow-hidden',
           sidebarCollapsed ? 'lg:w-[76px]' : 'lg:w-[240px] xl:w-[250px]',
         ].join(' ')}
@@ -1767,7 +1767,7 @@ export default function Dashboard() {
       </aside>
 
       {/* Main */}
-      <main className="flex-grow flex flex-col overflow-hidden">
+      <main className="flex-grow flex flex-col overflow-hidden h-full min-h-0">
         <div className="flex-1 p-4 sm:p-6 lg:p-8 overflow-x-hidden overflow-y-auto">
 
         {/* ΓöÇΓöÇ ANALYTICS TAB ΓöÇΓöÇ */}
@@ -4495,10 +4495,6 @@ export default function Dashboard() {
         {tab === 'expenses' && (
           <ExpensesView />
         )}
-        </div>
-        {/* Footer */}
-        <div className="shrink-0 border-t border-gray-100 bg-white/80 py-2 text-center text-[12px] font-semibold text-[#7A8A78] tracking-wide print:hidden">
-          Powered by Cenexa Systems © 2026
         </div>
       </main>
 
