@@ -2834,9 +2834,9 @@ export default function Dashboard() {
                 {/* Key metrics row: Revenue is 1st KPI card */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   {[
-                    { label: 'Total Product Revenue', value: formatCurrency(analytics.totalCompletedRevenue), icon: <RMIcon size={18} />, from: 'from-emerald-500 to-teal-600' },
-                    { label: 'Total Products Sold', value: String(Math.round(analytics.totalProductsSold)), icon: <Package size={18} />, from: 'from-blue-500 to-indigo-600' },
-                    { label: 'Average Product Revenue', value: `${formatCurrency(analytics.averageProductRevenue)} / Product`, icon: <RMIcon size={18} />, from: 'from-violet-500 to-purple-600' },
+                    { label: 'Total Product Revenue', value: formatCurrency(analytics.totalCompletedRevenue), icon: <RMIcon size={18} />, from: 'from-emerald-500 to-teal-600', nowrap: true },
+                    { label: 'Total Products Sold', value: String(Math.round(analytics.totalProductsSold)), icon: <Package size={18} />, from: 'from-blue-500 to-indigo-600', nowrap: true },
+                    { label: 'Average Product Revenue', value: formatCurrency(analytics.averageProductRevenue), icon: <RMIcon size={18} />, from: 'from-violet-500 to-purple-600', nowrap: true },
                     { label: 'Top Product', value: analytics.bestProduct || 'No sales yet', icon: <Trophy size={18} />, from: 'from-amber-500 to-orange-600' },
                   ].map((card, i) => (
                     <div key={i} className={`relative overflow-hidden rounded-2xl p-5 shadow-lg border border-white/20 bg-gradient-to-br ${card.from} flex flex-col justify-between min-h-[120px]`}>
@@ -2846,7 +2846,7 @@ export default function Dashboard() {
                           <p className="text-[10px] uppercase font-black text-white/80 tracking-wider">{card.label}</p>
                           <div className="w-9 h-9 rounded-xl bg-white/25 backdrop-blur-sm flex items-center justify-center text-white shadow-sm shrink-0">{card.icon}</div>
                         </div>
-                        <p className="text-[18px] sm:text-[22px] font-extrabold text-white drop-shadow-sm break-words leading-tight">{card.value}</p>
+                        <p className={`text-[18px] sm:text-[22px] font-extrabold text-white drop-shadow-sm leading-tight ${card.nowrap ? 'whitespace-nowrap' : 'break-words'}`}>{card.value}</p>
                       </div>
                     </div>
                   ))}
