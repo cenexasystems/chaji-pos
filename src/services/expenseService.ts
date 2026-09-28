@@ -1,4 +1,5 @@
 import { isSupabaseConfigured, supabase } from '../lib/supabase'
+import { toLocalDateStr } from '../lib/dateRange'
 
 export interface ExpenseRecord {
   id: string
@@ -96,12 +97,13 @@ const saveLocalCategories = (cats: ExpenseCategory[]) => {
 }
 
 function calculateMetricsFromList(expenses: ExpenseRecord[]): ExpenseSummaryMetrics {
-  const todayStr = new Date().toISOString().slice(0, 10)
   const now = new Date()
-  const dayOfWeek = (now.getDay() + 6) % 7 // Monday = 0
-  const monday = new Date(now)
-  monday.setDate(now.getDate() - dayOfWeek)
-  const weekStartStr = monday.toISOString().slice(0, 10)
+  const todayStr = toLocalDateStr(now)
+  // ISO Monday-based week start (fixes rolling-7-day bug)
+  const dayOfWeek = now.getDay() // 0=Sun, 1=Mon ... 6=Sat
+  const mondayOffset = dayOfWeek === 0 ? -6 : -(dayOfWeek - 1)
+  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + mondayOffset)
+  const weekStartStr = toLocalDateStr(monday)
   const monthStartStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
   const yearStartStr = `${now.getFullYear()}-01-01`
 

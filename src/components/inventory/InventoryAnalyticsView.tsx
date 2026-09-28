@@ -38,8 +38,11 @@ export const InventoryAnalyticsView: React.FC = () => {
       return { start, end: undefined }
     }
     if (range === 'week') {
-      const start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()
-      return { start, end: undefined }
+      // ISO week: Monday = day 1 (fixes rolling-7-day bug)
+      const dayOfWeek = now.getDay() // 0=Sun, 1=Mon..6=Sat
+      const mondayOffset = dayOfWeek === 0 ? -6 : -(dayOfWeek - 1)
+      const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + mondayOffset)
+      return { start: monday.toISOString(), end: undefined }
     }
     if (range === 'month') {
       const start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()

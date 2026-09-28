@@ -37,6 +37,12 @@ const RMIcon = ({ size = 16, className = '' }: { size?: number; className?: stri
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { isSupabaseConfigured, supabase } from '../lib/supabase'
 import { debounce } from '../lib/debounce'
+import {
+  getDateRange,
+  getDateRangeStrings,
+  isInRange,
+  type DateRange,
+} from '../lib/dateRange'
 import { useAuthStore, useProductStore, useAdminAuthStore, type Product } from '../store/store'
 import { useAlarmStore } from '../store/alarmStore'
 import { alarmSound } from '../lib/alarmAudio'
@@ -431,10 +437,17 @@ export default function Dashboard() {
 
   // Analytics (date-aware)
   const analytics = useMemo(() => {
-    // Apply global date filter
+    // Apply global date filter using proper local-timezone Date comparison (no UTC string compare)
     let dated = orders
-    if (analyticsDateFrom) dated = dated.filter(o => o.created_at >= `${analyticsDateFrom}T00:00:00`)
-    if (analyticsDateTo)   dated = dated.filter(o => o.created_at <= `${analyticsDateTo}T23:59:59`)
+    if (analyticsDateFrom || analyticsDateTo) {
+      const from = analyticsDateFrom
+        ? (() => { const p = analyticsDateFrom.split('-').map(Number); return new Date(p[0], p[1]-1, p[2], 0, 0, 0, 0) })()
+        : new Date(0)
+      const to = analyticsDateTo
+        ? (() => { const p = analyticsDateTo.split('-').map(Number); return new Date(p[0], p[1]-1, p[2], 23, 59, 59, 999) })()
+        : new Date(8640000000000000)
+      dated = dated.filter(o => isInRange(o.created_at, { start: from, end: to }))
+    }
 
     // Classify
     const nonCancelled = dated.filter(o => normalizeStatus(o.status) !== 'cancelled')
@@ -802,18 +815,7 @@ export default function Dashboard() {
     }
   }, [orders, orderItems, products, coupons, expenses, analyticsDateFrom, analyticsDateTo])
 
-  // Bill-type filtered results for Order Management table (client-side, instant)
-  const filteredSearchResults = useMemo(() => {
-    if (billTypeFilter === 'all') return searchResults
-    return searchResults.filter(o => {
-      const type = normalizeOrderType(o.order_type)
-      const mode = normalizeOrderMode(o.order_mode)
-      if (billTypeFilter === 'manual')  return type === 'manual_sale'
-      if (billTypeFilter === 'offline') return type === 'pos_sale' && mode !== 'online'
-      if (billTypeFilter === 'online')  return type === 'pos_sale' && mode === 'online'
-      return true
-    })
-  }, [searchResults, billTypeFilter])
+
 
   // Load dashboard data
   const loadData = useCallback(async () => {
@@ -1155,37 +1157,25 @@ export default function Dashboard() {
     }
   }, [tab, posAnalyticsTab, loadCoupons])
 
+  // ── Calendar-based date preset for Analytics (fixes rolling-7-day bug) ─────
   const applyAnalyticsPreset = (preset: 'all' | 'today' | 'week' | 'month' | 'year' | 'custom') => {
     setAnalyticsDatePreset(preset)
     if (preset === 'all')    { setAnalyticsDateFrom(''); setAnalyticsDateTo(''); return }
     if (preset === 'custom') return
-    const today = new Date()
-    const todayStr = today.toISOString().slice(0, 10)
-    if (preset === 'today') {
-      setAnalyticsDateFrom(todayStr); setAnalyticsDateTo(todayStr)
-    } else if (preset === 'week') {
-      const d = new Date(today); d.setDate(today.getDate() - 6)
-      setAnalyticsDateFrom(d.toISOString().slice(0, 10)); setAnalyticsDateTo(todayStr)
-    } else if (preset === 'month') {
-      setAnalyticsDateFrom(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`)
-      setAnalyticsDateTo(todayStr)
-    } else if (preset === 'year') {
-      setAnalyticsDateFrom(`${today.getFullYear()}-01-01`); setAnalyticsDateTo(todayStr)
+    const strings = getDateRangeStrings(preset as Exclude<typeof preset, 'all' | 'custom'>)
+    if (strings) {
+      setAnalyticsDateFrom(strings.from)
+      setAnalyticsDateTo(strings.to)
     }
   }
 
+  // ── Calendar-based date preset for Order Management (fixes rolling-7-day bug) ─
   const applyDatePreset = (preset: 'today' | 'week' | 'month' | 'custom') => {
     setDatePreset(preset)
     if (preset === 'custom') { setSearch(s => ({ ...s, dateFrom: '', dateTo: '' })); return }
-    const today = new Date()
-    const todayStr = today.toISOString().slice(0, 10)
-    if (preset === 'today') {
-      setSearch(s => ({ ...s, dateFrom: todayStr, dateTo: todayStr }))
-    } else if (preset === 'week') {
-      const weekAgo = new Date(today); weekAgo.setDate(today.getDate() - 6)
-      setSearch(s => ({ ...s, dateFrom: weekAgo.toISOString().slice(0, 10), dateTo: todayStr }))
-    } else if (preset === 'month') {
-      setSearch(s => ({ ...s, dateFrom: `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`, dateTo: todayStr }))
+    const strings = getDateRangeStrings(preset)
+    if (strings) {
+      setSearch(s => ({ ...s, dateFrom: strings.from, dateTo: strings.to }))
     }
   }
 
@@ -1207,6 +1197,78 @@ export default function Dashboard() {
     if (search.phone.trim()) count++
     return count
   }, [billTypeFilter, datePreset, search])
+
+  // ── Auto-apply filters: derive filteredSearchResults from ALL orders client-side ──
+  // This replaces the pattern of calling runSearch (a Supabase query) on every
+  // filter change. Instead we derive from the already-loaded orders list.
+  const filteredOrdersAll = useMemo(() => {
+    const allOrders = orders.filter(o => normalizeOrderType(o.order_type) !== 'online_request')
+
+    // Build date range once per render
+    let dateRange: DateRange | null = null
+    if (datePreset && datePreset !== 'custom') {
+      dateRange = getDateRange(datePreset as Exclude<typeof datePreset, '' | 'custom'>)
+    } else if (datePreset === 'custom' && search.dateFrom && search.dateTo) {
+      dateRange = getDateRange('custom', new Date(), { from: search.dateFrom, to: search.dateTo })
+    }
+
+    const qText = historyQuickSearch.trim().toLowerCase()
+    const invInput = search.invoiceNo.trim().toLowerCase()
+    const custInput = search.customerName.trim().toLowerCase()
+    const phoneInput = search.phone.trim()
+
+    return allOrders.filter(o => {
+      // Bill type filter
+      const type = normalizeOrderType(o.order_type)
+      const mode = normalizeOrderMode(o.order_mode)
+      if (billTypeFilter === 'manual'  && type !== 'manual_sale') return false
+      if (billTypeFilter === 'offline' && !(type === 'pos_sale' && mode !== 'online')) return false
+      if (billTypeFilter === 'online'  && !(type === 'pos_sale' && mode === 'online')) return false
+
+      // Date range filter
+      if (dateRange && !isInRange(o.created_at, dateRange)) return false
+
+      // Quick search
+      if (qText) {
+        const qDigits = qText.replace(/\D/g, '')
+        const invFormatted = formatInvoiceNo(o.invoice_no).toLowerCase()
+        const matchInv = o.invoice_no.toLowerCase().includes(qText) || invFormatted.includes(qText)
+        const matchCust = o.customer_name.toLowerCase().includes(qText)
+        const matchPhone = o.phone.toLowerCase().includes(qText)
+        const matchInvDigits = Boolean(qDigits && o.invoice_no.replace(/\D/g, '').includes(qDigits))
+        const matchPhoneDigits = Boolean(qDigits && qDigits.length >= 4 && o.phone.replace(/\D/g, '').includes(qDigits))
+        if (!matchInv && !matchCust && !matchPhone && !matchInvDigits && !matchPhoneDigits) return false
+      }
+
+      // Invoice number filter
+      if (invInput) {
+        const invDigits = invInput.replace(/\D/g, '')
+        const rawInv = o.invoice_no.toLowerCase()
+        const fmtInv = formatInvoiceNo(o.invoice_no).toLowerCase()
+        const matchRaw = rawInv.includes(invInput) || fmtInv.includes(invInput)
+        const matchDigits = invDigits && o.invoice_no.replace(/\D/g, '').includes(invDigits)
+        if (!matchRaw && !matchDigits) return false
+      }
+
+      // Customer name filter
+      if (custInput && !o.customer_name.toLowerCase().includes(custInput)) return false
+
+      // Phone filter
+      if (phoneInput) {
+        const pDigits = phoneInput.replace(/\D/g, '')
+        const rawPhoneDigits = o.phone.replace(/\D/g, '')
+        const matchRaw = o.phone.toLowerCase().includes(phoneInput.toLowerCase())
+        const matchDigits = Boolean(pDigits && rawPhoneDigits.includes(pDigits))
+        if (!matchRaw && !matchDigits) return false
+      }
+
+      return true
+    })
+  }, [orders, billTypeFilter, datePreset, search, historyQuickSearch])
+
+  // filteredSearchResults = alias for filteredOrdersAll. All JSX in the history tab uses this.
+  // It updates instantly on every filter change — no Search button click required.
+  const filteredSearchResults = filteredOrdersAll
 
   // Order search - POS bills only (online_request excluded)
   const runSearch = async (e?: FormEvent) => {
@@ -1768,7 +1830,7 @@ export default function Dashboard() {
 
       {/* Main */}
       <main className="flex-grow flex flex-col overflow-hidden h-full min-h-0">
-        <div className="flex-1 p-4 sm:p-6 lg:p-8 overflow-x-hidden overflow-y-auto">
+        <div className="flex-1 p-4 sm:p-6 lg:p-8 pb-[calc(56px+env(safe-area-inset-bottom,0px))] lg:pb-8 overflow-x-hidden overflow-y-auto">
 
         {/* ΓöÇΓöÇ ANALYTICS TAB ΓöÇΓöÇ */}
 
@@ -3109,7 +3171,7 @@ export default function Dashboard() {
 
         {/* ── BILLING PANEL ── */}
         {tab === 'billing' && (
-          <div className="-m-4 sm:-m-6 lg:-m-8">
+          <div className="-mx-4 -mt-4 sm:-mx-6 sm:-mt-6 lg:-mx-8 lg:-mt-8 mb-0">
             <Pos
               isEmbedded
               externalScannedCode={cartItemToInject}

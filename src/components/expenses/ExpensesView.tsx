@@ -24,6 +24,7 @@ import {
 } from '../../services/expenseService'
 import { RecordExpenseModal } from './RecordExpenseModal'
 import { ExpenseCategoriesView } from './ExpenseCategoriesView'
+import { getDateRangeStrings } from '../../lib/dateRange'
 
 export const ExpensesView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'expenses' | 'categories'>('expenses')
@@ -117,30 +118,20 @@ export const ExpensesView: React.FC = () => {
     )
   }, [expenses, searchQuery])
 
-  // Handle Preset Clicks (Synchronizes FROM and TO dates)
+  // Handle Preset Clicks using shared calendar-based ranges
   const applyDatePreset = (preset: 'all' | 'today' | 'week' | 'month' | 'custom') => {
     setActivePreset(preset)
-    const today = new Date()
-    const todayStr = today.toISOString().slice(0, 10)
-
     if (preset === 'all') {
       setFromDate('')
       setToDate('')
-    } else if (preset === 'today') {
-      setFromDate(todayStr)
-      setToDate(todayStr)
-    } else if (preset === 'week') {
-      const dayOfWeek = (today.getDay() + 6) % 7
-      const monday = new Date(today)
-      monday.setDate(today.getDate() - dayOfWeek)
-      setFromDate(monday.toISOString().slice(0, 10))
-      setToDate(todayStr)
-    } else if (preset === 'month') {
-      const monthStart = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`
-      setFromDate(monthStart)
-      setToDate(todayStr)
     } else if (preset === 'custom') {
       setShowAdvancedFilters(true)
+    } else {
+      const strings = getDateRangeStrings(preset)
+      if (strings) {
+        setFromDate(strings.from)
+        setToDate(strings.to)
+      }
     }
   }
 

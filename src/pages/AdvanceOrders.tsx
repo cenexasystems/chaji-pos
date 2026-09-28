@@ -13,6 +13,7 @@ import {
   addAdvanceEvent, completeAdvanceOrder, createAdvanceOrder, getAdvanceOrderHistory, listAdvanceOrders, updateAdvanceStatus, deleteAdvanceOrder,
   type AdvanceOrder, type AdvancePayment, type AdvancePaymentMethod, type AdvanceStatus, type AdvanceTimeline,
 } from '../services/advanceOrderService'
+import { getDateRange, isInRange } from '../lib/dateRange'
 
 // Custom Malaysian Ringgit icon
 const RMIcon = ({ size = 20, className = '' }: { size?: number; className?: string }) => (
@@ -152,10 +153,9 @@ export default function AdvanceOrders({ onOrderCompleted }: AdvanceOrdersProps =
     if (statusFilter === 'completed' && order.status !== 'completed') return false
     if (statusFilter === 'cancelled' && order.status !== 'cancelled') return false
     if (dateFilter !== 'all') {
-      const created = new Date(order.created_at); const now = new Date()
-      if (dateFilter === 'today' && dateKey(created) !== dateKey(now)) return false
-      if (dateFilter === 'week' && created < new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6)) return false
-      if (dateFilter === 'month' && (created.getMonth() !== now.getMonth() || created.getFullYear() !== now.getFullYear())) return false
+      // Use shared calendar-based ranges (fixes rolling-7-day bug)
+      const range = getDateRange(dateFilter as Exclude<typeof dateFilter, 'all'>)
+      if (range && !isInRange(order.created_at, range)) return false
     }
     return true
   }), [orders, search, statusFilter, dateFilter])

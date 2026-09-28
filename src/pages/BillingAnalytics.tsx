@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import CompactAnalytics from '../components/dashboard/CompactAnalytics'
 import { isSupabaseConfigured, supabase } from '../lib/supabase'
+import { getDateRangeStrings } from '../lib/dateRange'
 
 // Custom Malaysian Ringgit icon
 const RMIcon = ({ size = 16, className = '' }: { size?: number; className?: string }) => (
@@ -253,23 +254,10 @@ export default function BillingAnalytics() {
       return
     }
     if (preset === 'custom') return
-
-    const today = new Date()
-    const todayStr = today.toISOString().slice(0, 10)
-    if (preset === 'today') {
-      setAnalyticsDateFrom(todayStr)
-      setAnalyticsDateTo(todayStr)
-    } else if (preset === 'week') {
-      const weekAgo = new Date(today)
-      weekAgo.setDate(today.getDate() - 6)
-      setAnalyticsDateFrom(weekAgo.toISOString().slice(0, 10))
-      setAnalyticsDateTo(todayStr)
-    } else if (preset === 'month') {
-      setAnalyticsDateFrom(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`)
-      setAnalyticsDateTo(todayStr)
-    } else if (preset === 'year') {
-      setAnalyticsDateFrom(`${today.getFullYear()}-01-01`)
-      setAnalyticsDateTo(todayStr)
+    const strings = getDateRangeStrings(preset as Exclude<typeof preset, 'all' | 'custom'>)
+    if (strings) {
+      setAnalyticsDateFrom(strings.from)
+      setAnalyticsDateTo(strings.to)
     }
   }
 
