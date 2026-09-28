@@ -1824,6 +1824,11 @@ export default function Dashboard() {
             <span className="shrink-0"><Power size={17} /></span>
             <span className={`truncate text-left transition-all duration-200 ${sidebarCollapsed ? 'w-0 opacity-0 overflow-hidden' : 'opacity-100 flex-1'}`}>Logout</span>
           </button>
+          {!sidebarCollapsed && (
+            <p className="text-[10px] text-center text-white/30 pt-1.5 tracking-wide select-none">
+              Powered by Cenexa Systems &copy; {new Date().getFullYear()}
+            </p>
+          )}
         </div>
 
       </aside>
