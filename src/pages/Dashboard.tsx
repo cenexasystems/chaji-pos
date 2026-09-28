@@ -1824,18 +1824,13 @@ export default function Dashboard() {
             <span className="shrink-0"><Power size={17} /></span>
             <span className={`truncate text-left transition-all duration-200 ${sidebarCollapsed ? 'w-0 opacity-0 overflow-hidden' : 'opacity-100 flex-1'}`}>Logout</span>
           </button>
-          {!sidebarCollapsed && (
-            <p className="text-[10px] text-center text-white/30 pt-1.5 tracking-wide select-none">
-              Powered by Cenexa Systems &copy; {new Date().getFullYear()}
-            </p>
-          )}
         </div>
 
       </aside>
 
       {/* Main */}
       <main className="flex-grow flex flex-col overflow-hidden h-full min-h-0">
-        <div className="flex-1 p-4 sm:p-6 lg:p-8 pb-[calc(56px+env(safe-area-inset-bottom,0px))] lg:pb-8 overflow-x-hidden overflow-y-auto">
+        <div className="flex-1 flex flex-col min-h-full lg:min-h-[100dvh] p-4 sm:p-6 lg:p-8 pb-[calc(56px+env(safe-area-inset-bottom,0px))] lg:pb-0 overflow-x-hidden overflow-y-auto">
 
         {/* ΓöÇΓöÇ ANALYTICS TAB ΓöÇΓöÇ */}
 
@@ -4562,6 +4557,11 @@ export default function Dashboard() {
         {tab === 'expenses' && (
           <ExpensesView />
         )}
+
+        {/* Desktop Content Footer */}
+        <footer className="hidden lg:block mt-auto py-4 text-center text-[12px] font-semibold text-[#7A8A78] tracking-wide select-none">
+          Powered by Cenexa Systems &copy; {new Date().getFullYear()}
+        </footer>
         </div>
       </main>
 
