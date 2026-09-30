@@ -878,9 +878,9 @@ export default function ImageMappingTool() {
 
       {/* ── CONFI₹ UPLOAD MODAL ── */}
       {confirmUpload && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 h-[100dvh] max-h-[100dvh] overflow-hidden">
           <div className="absolute inset-0 bg-black/50" onClick={() => setConfirmUpload(false)} />
-          <div className="relative z-10 w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 space-y-4">
+          <div className="relative z-10 w-full max-w-md max-h-[92dvh] overflow-y-auto bg-white rounded-2xl shadow-2xl p-5 sm:p-6 space-y-4">
             <div className="flex items-start gap-3">
               <div className="h-10 w-10 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
                 <AlertTriangle size={20} className="text-amber-500" />
@@ -917,18 +917,18 @@ export default function ImageMappingTool() {
               ⚠ This action cannot be automatically undone. Existing image URLs will be overwritten.
             </p>
 
-            <div className="flex gap-2 pt-1">
+            <div className="flex gap-2 pt-2 sticky bottom-0 bg-white pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)] sm:pb-0">
               <button
                 type="button"
                 onClick={() => setConfirmUpload(false)}
-                className="flex-1 py-2.5 rounded-xl border border-[#E5E7EB]/60 text-[13px] font-black text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                className="flex-1 min-h-[44px] sm:min-h-0 py-2.5 rounded-xl border border-[#E5E7EB]/60 text-[13px] font-black text-[#374151] hover:bg-[#F9FAFB] transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={() => void handleUpload()}
-                className="flex-1 py-2.5 rounded-xl bg-[#111111] text-white text-[13px] font-black hover:bg-[#1e2817] transition-colors"
+                className="flex-1 min-h-[44px] sm:min-h-0 py-2.5 rounded-xl bg-[#111111] text-white text-[13px] font-black hover:bg-[#1e2817] transition-colors"
               >
                 Upload & Apply
               </button>

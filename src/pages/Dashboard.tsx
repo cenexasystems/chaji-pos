@@ -4572,7 +4572,7 @@ export default function Dashboard() {
 
         return (
           <div
-            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-3 sm:p-6"
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-0 sm:p-6 h-[100dvh] max-h-[100dvh] overflow-hidden"
             role="dialog"
             aria-modal="true"
             aria-label={`Invoice ${invoicePreviewOrder.invoice_no || invoicePreviewOrder.id}`}
@@ -4580,7 +4580,7 @@ export default function Dashboard() {
               if (event.target === event.currentTarget) setInvoicePreviewOrder(null)
             }}
           >
-            <div className="flex max-h-[95vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-[#F9FAFB] shadow-2xl">
+            <div className="flex h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-[95dvh] w-full max-w-4xl flex-col overflow-hidden rounded-none sm:rounded-2xl bg-[#F9FAFB] shadow-2xl">
               <div className="flex shrink-0 items-center justify-between border-b border-[#E5E7EB]/60 bg-white px-4 py-3 sm:px-6">
                 <div>
                   <h2 className="text-base font-black text-[#111111]">Invoice Preview</h2>

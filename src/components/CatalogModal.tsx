@@ -123,49 +123,56 @@ export default function CatalogModal({ isOpen, onClose, onAdd }: CatalogModalPro
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl sm:rounded-3xl w-full max-w-5xl flex min-h-0 flex-col shadow-2xl overflow-hidden border border-[#E5E7EB]/40 max-h-[calc(100dvh-1rem)] sm:max-h-[85vh]">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4 h-[100dvh] max-h-[100dvh] overflow-hidden">
+      <div className="bg-white rounded-none sm:rounded-3xl w-full max-w-5xl flex min-h-0 flex-col shadow-2xl overflow-hidden border-0 sm:border border-[#E5E7EB]/40 h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-[88dvh]">
 
         {editingProduct ? (
           <>
-            <div className="flex items-center justify-between p-6 border-b border-[#E5E7EB]/40 bg-[#F9FAFB]">
-              <h2 className="text-xl font-black text-[#111111]">Edit Product</h2>
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-[#E5E7EB]/40 bg-[#F9FAFB] shrink-0">
+              <h2 className="text-lg sm:text-xl font-black text-[#111111]">Edit Product</h2>
               <button onClick={cancelEdit} className="p-2 rounded-xl hover:bg-black/5 text-[#374151]">
                 <X size={20} />
               </button>
             </div>
-            <form onSubmit={saveEdit} className="p-6 flex flex-col gap-4">
-              {editError && <div className="text-red-500 text-sm font-bold bg-red-50 p-3 rounded-xl">{editError}</div>}
-              <div>
-                <label className="block text-[10px] font-black text-[#374151] tracking-wider uppercase mb-1.5">Product Name</label>
-                <input type="text" value={editForm.name}
-                  onChange={e => setEditForm({...editForm, name: e.target.value})}
-                  className="w-full px-4 py-3 bg-[#F9FAFB] border border-[#E5E7EB]/60 rounded-xl focus:outline-none focus:border-[#D4AF37] text-[13px] font-bold" />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <form onSubmit={saveEdit} className="flex-1 min-h-0 flex flex-col overflow-hidden">
+              <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 flex flex-col gap-4">
+                {editError && <div className="text-red-500 text-sm font-bold bg-red-50 p-3 rounded-xl">{editError}</div>}
                 <div>
-                  <label className="block text-[10px] font-black text-[#374151] tracking-wider uppercase mb-1.5">Category</label>
-                  <select value={editForm.category}
-                    onChange={e => setEditForm({...editForm, category: e.target.value})}
-                    className="w-full min-w-0 h-12 px-4 py-3 bg-[#F9FAFB] border border-[#E5E7EB]/60 rounded-xl focus:outline-none focus:border-[#D4AF37] text-[13px] font-bold touch-manipulation">
-                    <option value="">Select category</option>
-                    {allCategoryOptions.map(category => <option key={category.id} value={category.name_en}>{category.name_en}</option>)}
-                    {!allCategoryOptions.some(category => category.name_en === editForm.category) && editForm.category && (
-                      <option value={editForm.category}>{editForm.category}</option>
-                    )}
-                  </select>
+                  <label className="block text-[10px] font-black text-[#374151] tracking-wider uppercase mb-1.5">Product Name</label>
+                  <input type="text" value={editForm.name}
+                    onChange={e => setEditForm({...editForm, name: e.target.value})}
+                    className="w-full px-4 py-3 bg-[#F9FAFB] border border-[#E5E7EB]/60 rounded-xl focus:outline-none focus:border-[#D4AF37] text-[13px] font-bold" />
                 </div>
-                <div>
-                  <label className="block text-[10px] font-black text-[#374151] tracking-wider uppercase mb-1.5">Price (₹)</label>
-                  <input type="number" value={editForm.price}
-                    onChange={e => setEditForm({...editForm, price: e.target.value})}
-                    className="w-full px-4 py-3 bg-[#F9FAFB] border border-[#E5E7EB]/60 rounded-xl focus:outline-none focus:border-[#D4AF37] text-[13px] font-bold text-right" placeholder="0" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-black text-[#374151] tracking-wider uppercase mb-1.5">Category</label>
+                    <select value={editForm.category}
+                      onChange={e => setEditForm({...editForm, category: e.target.value})}
+                      className="w-full min-w-0 h-12 px-4 py-3 bg-[#F9FAFB] border border-[#E5E7EB]/60 rounded-xl focus:outline-none focus:border-[#D4AF37] text-[13px] font-bold touch-manipulation">
+                      <option value="">Select category</option>
+                      {allCategoryOptions.map(category => <option key={category.id} value={category.name_en}>{category.name_en}</option>)}
+                      {!allCategoryOptions.some(category => category.name_en === editForm.category) && editForm.category && (
+                        <option value={editForm.category}>{editForm.category}</option>
+                      )}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-[#374151] tracking-wider uppercase mb-1.5">Price (₹)</label>
+                    <input type="number" value={editForm.price}
+                      onChange={e => setEditForm({...editForm, price: e.target.value})}
+                      className="w-full px-4 py-3 bg-[#F9FAFB] border border-[#E5E7EB]/60 rounded-xl focus:outline-none focus:border-[#D4AF37] text-[13px] font-bold text-right" placeholder="0" />
+                  </div>
                 </div>
               </div>
-              <button type="submit" disabled={editLoading}
-                className="mt-4 w-full py-3.5 bg-[#D4AF37] hover:bg-[#065F46] text-white rounded-xl text-[13px] font-black uppercase tracking-wider transition-colors disabled:opacity-50">
-                {editLoading ? 'Saving...' : 'Save Changes'}
-              </button>
+              <div className="sticky bottom-0 z-20 shrink-0 p-4 sm:p-6 bg-white border-t border-[#E5E7EB]/40 flex items-center gap-3 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)]">
+                <button type="button" onClick={cancelEdit} className="flex-1 sm:flex-none px-5 min-h-[48px] sm:min-h-0 sm:py-3.5 border border-gray-300 rounded-xl text-[13px] font-black uppercase text-gray-700 hover:bg-gray-50 transition-colors">
+                  Cancel
+                </button>
+                <button type="submit" disabled={editLoading}
+                  className="flex-[2] sm:flex-none sm:px-8 min-h-[48px] sm:min-h-0 sm:py-3.5 bg-[#D4AF37] hover:bg-[#065F46] text-white rounded-xl text-[13px] font-black uppercase tracking-wider transition-colors disabled:opacity-50">
+                  {editLoading ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
             </form>
           </>
         ) : (

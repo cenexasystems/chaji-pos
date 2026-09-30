@@ -1741,31 +1741,36 @@ export default function Pos(props: PosProps = {}) {
       </div>
 
       {depositOpen && (
-        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/55 p-4">
-          <form onSubmit={saveDepositOrder} className="max-h-[94vh] w-full max-w-lg overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl">
-            <div className="mb-5 flex items-start justify-between gap-3">
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/55 p-0 sm:p-4 h-[100dvh] max-h-[100dvh] overflow-hidden">
+          <form onSubmit={saveDepositOrder} className="h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-[92dvh] w-full max-w-lg rounded-none sm:rounded-3xl bg-white shadow-2xl flex flex-col overflow-hidden">
+            <div className="p-4 sm:p-6 border-b border-gray-100 flex items-start justify-between gap-3 shrink-0 bg-[#FBFAF6]">
               <div>
                 <p className="text-[11px] font-black uppercase tracking-[.16em] text-violet-600">Advance payment only</p>
-                <h3 className="text-xl font-black text-[#111111]">Save as Deposit Order</h3>
+                <h3 className="text-lg sm:text-xl font-black text-[#111111]">Save as Deposit Order</h3>
                 <p className="mt-1 text-xs font-semibold text-amber-700">No sale or tax invoice will be created now.</p>
               </div>
-              <button type="button" onClick={() => { setDepositOpen(false); setError('') }} className="rounded-lg p-1 text-gray-500 hover:bg-gray-100"><X size={20}/></button>
+              <button type="button" onClick={() => { setDepositOpen(false); setError('') }} className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 cursor-pointer"><X size={20}/></button>
             </div>
-            <div className="mb-4 rounded-2xl bg-violet-50 p-4">
-              <div className="flex justify-between text-sm"><span className="font-bold text-violet-700">Order total</span><span className="font-black text-violet-900">{formatCurrency(total)}</span></div>
-              <div className="mt-2 max-h-24 space-y-1 overflow-y-auto border-t border-violet-200 pt-2">{items.map(item => <div key={item.id} className="flex justify-between gap-3 text-xs"><span className="truncate">{item.qty}× {item.name}</span><span className="font-bold">{formatCurrency(item.lineTotal)}</span></div>)}</div>
+            <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-4">
+              <div className="rounded-2xl bg-violet-50 p-4">
+                <div className="flex justify-between text-sm"><span className="font-bold text-violet-700">Order total</span><span className="font-black text-violet-900">{formatCurrency(total)}</span></div>
+                <div className="mt-2 max-h-24 space-y-1 overflow-y-auto border-t border-violet-200 pt-2">{items.map(item => <div key={item.id} className="flex justify-between gap-3 text-xs"><span className="truncate">{item.qty}× {item.name}</span><span className="font-bold">{formatCurrency(item.lineTotal)}</span></div>)}</div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="block"><span className="mb-1 block text-[10px] font-black uppercase tracking-wide text-[#6B7280]">Deposit received *</span><input required autoFocus type="number" onWheel={(e) => (e.target as HTMLInputElement).blur()} min="0.01" max={Math.max(0, total - 0.01)} step="0.01" value={depositForm.amount} onChange={e => setDepositForm({...depositForm, amount:e.target.value})} className="w-full rounded-xl border px-3 py-2.5 text-sm font-bold outline-none focus:border-violet-600"/></label>
+                <label className="block"><span className="mb-1 block text-[10px] font-black uppercase tracking-wide text-[#6B7280]">Remaining balance</span><div className="rounded-xl bg-red-50 px-3 py-2.5 text-sm font-black text-red-700">{formatCurrency(Math.max(0,total-Number(depositForm.amount||0)))}</div></label>
+                <label className="block"><span className="mb-1 block text-[10px] font-black uppercase tracking-wide text-[#6B7280]">Expected delivery *</span><input required type="date" value={depositForm.expectedDeliveryDate} onChange={e => setDepositForm({...depositForm, expectedDeliveryDate:e.target.value})} className="w-full rounded-xl border px-3 py-2.5 text-sm font-bold outline-none focus:border-violet-600"/></label>
+                <label className="block"><span className="mb-1 block text-[10px] font-black uppercase tracking-wide text-[#6B7280]">Payment method *</span><select value={depositForm.paymentMethod} onChange={e => setDepositForm({...depositForm,paymentMethod:e.target.value as AdvancePaymentMethod})} className="w-full rounded-xl border px-3 py-2.5 text-sm font-bold outline-none focus:border-violet-600"><option value="cash">Cash</option><option value="upi">QR</option><option value="card">Card</option></select></label>
+                <label className="block sm:col-span-2"><span className="mb-1 block text-[10px] font-black uppercase tracking-wide text-[#6B7280]">Delivery address</span><textarea value={depositForm.address} onChange={e => setDepositForm({...depositForm,address:e.target.value})} className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:border-violet-600" rows={2}/></label>
+                <label className="block sm:col-span-2"><span className="mb-1 block text-[10px] font-black uppercase tracking-wide text-[#6B7280]">Reference Number</span><input value={depositForm.referenceNumber} onChange={e => setDepositForm({...depositForm,referenceNumber:e.target.value})} className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:border-violet-600" placeholder="e.g. PO-001, booking ref (optional)"/></label>
+                <label className="block sm:col-span-2"><span className="mb-1 block text-[10px] font-black uppercase tracking-wide text-[#6B7280]">Remarks</span><textarea value={depositForm.remarks} onChange={e => setDepositForm({...depositForm,remarks:e.target.value})} className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:border-violet-600" rows={2}/></label>
+              </div>
+              {error && <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-bold text-red-600">{error}</div>}
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block"><span className="mb-1 block text-[10px] font-black uppercase tracking-wide text-[#6B7280]">Deposit received *</span><input required autoFocus type="number" onWheel={(e) => (e.target as HTMLInputElement).blur()} min="0.01" max={Math.max(0, total - 0.01)} step="0.01" value={depositForm.amount} onChange={e => setDepositForm({...depositForm, amount:e.target.value})} className="w-full rounded-xl border px-3 py-2.5 text-sm font-bold outline-none focus:border-violet-600"/></label>
-              <label className="block"><span className="mb-1 block text-[10px] font-black uppercase tracking-wide text-[#6B7280]">Remaining balance</span><div className="rounded-xl bg-red-50 px-3 py-2.5 text-sm font-black text-red-700">{formatCurrency(Math.max(0,total-Number(depositForm.amount||0)))}</div></label>
-              <label className="block"><span className="mb-1 block text-[10px] font-black uppercase tracking-wide text-[#6B7280]">Expected delivery *</span><input required type="date" value={depositForm.expectedDeliveryDate} onChange={e => setDepositForm({...depositForm, expectedDeliveryDate:e.target.value})} className="w-full rounded-xl border px-3 py-2.5 text-sm font-bold outline-none focus:border-violet-600"/></label>
-              <label className="block"><span className="mb-1 block text-[10px] font-black uppercase tracking-wide text-[#6B7280]">Payment method *</span><select value={depositForm.paymentMethod} onChange={e => setDepositForm({...depositForm,paymentMethod:e.target.value as AdvancePaymentMethod})} className="w-full rounded-xl border px-3 py-2.5 text-sm font-bold outline-none focus:border-violet-600"><option value="cash">Cash</option><option value="upi">QR</option><option value="card">Card</option></select></label>
-              <label className="block sm:col-span-2"><span className="mb-1 block text-[10px] font-black uppercase tracking-wide text-[#6B7280]">Delivery address</span><textarea value={depositForm.address} onChange={e => setDepositForm({...depositForm,address:e.target.value})} className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:border-violet-600" rows={2}/></label>
-              <label className="block sm:col-span-2"><span className="mb-1 block text-[10px] font-black uppercase tracking-wide text-[#6B7280]">Reference Number</span><input value={depositForm.referenceNumber} onChange={e => setDepositForm({...depositForm,referenceNumber:e.target.value})} className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:border-violet-600" placeholder="e.g. PO-001, booking ref (optional)"/></label>
-              <label className="block sm:col-span-2"><span className="mb-1 block text-[10px] font-black uppercase tracking-wide text-[#6B7280]">Remarks</span><textarea value={depositForm.remarks} onChange={e => setDepositForm({...depositForm,remarks:e.target.value})} className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:border-violet-600" rows={2}/></label>
+            <div className="sticky bottom-0 z-20 shrink-0 p-4 sm:p-5 bg-white border-t border-gray-100 flex gap-3 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)]">
+              <button type="button" onClick={() => { setDepositOpen(false); setError('') }} className="flex-1 min-h-[48px] rounded-xl border border-gray-300 py-3 text-sm font-black text-gray-700 hover:bg-gray-50">Cancel</button>
+              <button disabled={saving} className="flex-[1.5] min-h-[48px] rounded-xl bg-violet-700 py-3 text-sm font-black text-white hover:bg-violet-800 disabled:opacity-50">{saving ? 'Saving…' : 'Confirm Deposit Order'}</button>
             </div>
-            {error && <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-bold text-red-600">{error}</div>}
-            <div className="mt-5 flex gap-3"><button type="button" onClick={() => { setDepositOpen(false); setError('') }} className="flex-1 rounded-xl border py-3 text-sm font-black">Cancel</button><button disabled={saving} className="flex-[1.5] rounded-xl bg-violet-700 py-3 text-sm font-black text-white disabled:opacity-50">{saving ? 'Saving…' : 'Confirm Deposit Order'}</button></div>
           </form>
         </div>
       )}
@@ -1804,9 +1809,9 @@ export default function Pos(props: PosProps = {}) {
 
       {/* Variant Picker Modal for Multi-Variant Products */}
       {variantPickerProduct && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full border border-[#E8D399] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-150">
-            <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-[#FBFAF6]">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 backdrop-blur-xs p-0 sm:p-4 h-[100dvh] max-h-[100dvh] overflow-hidden">
+          <div className="bg-white rounded-none sm:rounded-3xl max-w-md w-full h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-[92dvh] border-0 sm:border border-[#E8D399] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-150">
+            <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-[#FBFAF6] shrink-0">
               <div>
                 <h3 className="text-sm font-black uppercase tracking-wider text-[#0A0A0A]">
                   Select Variant / Size
@@ -1827,7 +1832,7 @@ export default function Pos(props: PosProps = {}) {
               </button>
             </div>
 
-            <div className="p-5 space-y-4">
+            <div className="p-4 sm:p-5 space-y-4 flex-1 min-h-0 overflow-y-auto">
               <div className="space-y-2">
                 <label className="block text-[11px] font-black uppercase tracking-wider text-gray-600">
                   Available Sizes &amp; Options ({availableVariants.length})
@@ -1862,7 +1867,7 @@ export default function Pos(props: PosProps = {}) {
                   <button
                     type="button"
                     onClick={() => setVariantPickerQty((q) => Math.max(1, q - 1))}
-                    className="w-8 h-8 rounded-xl border border-gray-300 bg-white font-black text-sm flex items-center justify-center hover:bg-gray-100 cursor-pointer"
+                    className="w-9 h-9 rounded-xl border border-gray-300 bg-white font-black text-sm flex items-center justify-center hover:bg-gray-100 cursor-pointer"
                   >
                     -
                   </button>
@@ -1872,18 +1877,20 @@ export default function Pos(props: PosProps = {}) {
                   <button
                     type="button"
                     onClick={() => setVariantPickerQty((q) => q + 1)}
-                    className="w-8 h-8 rounded-xl border border-gray-300 bg-white font-black text-sm flex items-center justify-center hover:bg-gray-100 cursor-pointer"
+                    className="w-9 h-9 rounded-xl border border-gray-300 bg-white font-black text-sm flex items-center justify-center hover:bg-gray-100 cursor-pointer"
                   >
                     +
                   </button>
                 </div>
               </div>
+            </div>
 
-              {/* Add Button */}
+            {/* Sticky Action Footer */}
+            <div className="sticky bottom-0 z-20 shrink-0 p-4 sm:p-5 bg-white border-t border-gray-100 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)]">
               <button
                 type="button"
                 onClick={addVariantToItems}
-                className="w-full py-3 rounded-2xl bg-[#0A0A0A] border border-[#D4AF37] text-[#D4AF37] text-xs font-black uppercase tracking-wider hover:bg-[#1A1A1A] transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full min-h-[48px] py-3 rounded-2xl bg-[#0A0A0A] border border-[#D4AF37] text-[#D4AF37] text-xs font-black uppercase tracking-wider hover:bg-[#1A1A1A] transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
               >
                 Add to Order (₹{((selectedVariant?.price || variantPickerProduct.price || 0) * variantPickerQty).toFixed(2)})
               </button>
@@ -1894,9 +1901,9 @@ export default function Pos(props: PosProps = {}) {
 
       {/* Price Edit & Inventory Confirmation Modal */}
       {priceEditModal.isOpen && priceEditModal.item && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-amber-50/50 to-white">
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4 h-[100dvh] max-h-[100dvh] overflow-hidden animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-md max-h-[92dvh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-amber-50/50 to-white shrink-0">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-[#D4AF37]/10 flex items-center justify-center text-[#B48811]">
                   <Edit2 size={16} />
@@ -1915,7 +1922,7 @@ export default function Pos(props: PosProps = {}) {
               </button>
             </div>
 
-            <div className="p-5 space-y-4">
+            <div className="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1 min-h-0">
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider">
@@ -1958,37 +1965,39 @@ export default function Pos(props: PosProps = {}) {
                   Selecting <strong>Yes</strong> updates the price in your master product catalog and inventory database. Selecting <strong>No</strong> updates it for this billing session only.
                 </p>
               </div>
+            </div>
 
-              <div className="pt-2 grid grid-cols-2 gap-2.5">
+            <div className="sticky bottom-0 z-20 shrink-0 px-4 sm:px-5 py-3 sm:py-4 bg-white border-t border-gray-100 flex flex-col gap-2 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)]">
+              <div className="grid grid-cols-2 gap-2.5">
                 <button
                   type="button"
                   disabled={priceEditModal.isSubmitting}
                   onClick={() => void handleSavePrice(true)}
-                  className="h-11 px-3 bg-[#0A0A0A] hover:bg-[#1A1A1A] text-[#D4AF37] border border-[#D4AF37] font-bold text-xs rounded-xl shadow-sm hover:shadow transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                  className="min-h-[44px] h-11 px-3 bg-[#0A0A0A] hover:bg-[#1A1A1A] text-[#D4AF37] border border-[#D4AF37] font-bold text-xs rounded-xl shadow-sm hover:shadow transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
                 >
                   {priceEditModal.isSubmitting ? (
                     <RefreshCw size={14} className="animate-spin" />
                   ) : (
                     <Check size={14} />
                   )}
-                  <span>Yes (Update Inventory)</span>
+                  <span>Yes (Inventory)</span>
                 </button>
 
                 <button
                   type="button"
                   disabled={priceEditModal.isSubmitting}
                   onClick={() => void handleSavePrice(false)}
-                  className="h-11 px-3 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1 disabled:opacity-50 cursor-pointer"
+                  className="min-h-[44px] h-11 px-3 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1 disabled:opacity-50 cursor-pointer"
                 >
-                  <span>No (This Bill Only)</span>
+                  <span>No (This Bill)</span>
                 </button>
               </div>
 
-              <div className="text-center pt-1">
+              <div className="text-center pt-0.5">
                 <button
                   type="button"
                   onClick={handleClosePriceEdit}
-                  className="text-xs font-semibold text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                  className="text-xs font-semibold text-gray-400 hover:text-gray-600 transition-colors cursor-pointer py-1"
                 >
                   Cancel
                 </button>

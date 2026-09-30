@@ -123,12 +123,12 @@ export default function AddProductModal({ isOpen, onClose, onSuccess }: AddProdu
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-3xl w-full max-w-md flex flex-col shadow-2xl overflow-hidden border border-[#E8D399] animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-0 sm:p-4 overflow-hidden h-[100dvh] max-h-[100dvh]">
+      <div className="bg-white rounded-none sm:rounded-3xl w-full max-w-md h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-[92dvh] flex flex-col shadow-2xl overflow-hidden border-0 sm:border border-[#E8D399] animate-in fade-in zoom-in-95 duration-200">
 
-        <div className="flex items-center justify-between p-6 border-b border-[#D4AF37]/30 bg-[#0A0A0A] text-white">
+        <div className="shrink-0 flex items-center justify-between p-4 sm:p-6 border-b border-[#D4AF37]/30 bg-[#0A0A0A] text-white">
           <div>
-            <h2 className="text-lg font-black text-white">Add Product to {BRAND_EN}</h2>
+            <h2 className="text-base sm:text-lg font-black text-white">Add Product to {BRAND_EN}</h2>
             <p className="text-xs text-[#D4AF37] font-semibold">Instantly available in Catalog &amp; Billing</p>
           </div>
           <button onClick={onClose} className="p-2 rounded-xl hover:bg-white/10 text-white transition-colors cursor-pointer">
@@ -136,7 +136,8 @@ export default function AddProductModal({ isOpen, onClose, onSuccess }: AddProdu
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="flex-1 min-h-0 flex flex-col overflow-hidden">
+          <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-4 overscroll-contain">
           {error && <div className="text-red-600 text-xs font-bold bg-red-50 p-3 rounded-xl border border-red-200">{error}</div>}
 
           <div>
@@ -238,14 +239,18 @@ export default function AddProductModal({ isOpen, onClose, onSuccess }: AddProdu
             <Sparkles size={14} className="text-[#B48811] shrink-0 mt-0.5" />
             <span>Product will be immediately ready in POS search and catalog. Barcode generation is optional.</span>
           </div>
+          </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="mt-2 w-full py-3.5 bg-[#0A0A0A] border border-[#D4AF37] hover:bg-[#1A1A1A] text-[#D4AF37] rounded-xl text-xs font-black tracking-wider transition-all disabled:opacity-50 shadow-md cursor-pointer"
-          >
-            {loading ? 'Creating...' : 'Save Product'}
-          </button>
+          {/* Sticky Footer */}
+          <div className="sticky bottom-0 z-20 shrink-0 px-4 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] sm:px-6 sm:py-4 border-t border-gray-100 bg-[#FBFAF6]">
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full min-h-[48px] sm:min-h-0 py-3.5 bg-[#0A0A0A] border border-[#D4AF37] hover:bg-[#1A1A1A] text-[#D4AF37] rounded-xl text-xs font-black tracking-wider transition-all disabled:opacity-50 shadow-md cursor-pointer flex items-center justify-center"
+            >
+              {loading ? 'Creating...' : 'Save Product'}
+            </button>
+          </div>
         </form>
       </div>
     </div>

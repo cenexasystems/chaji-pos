@@ -217,7 +217,7 @@ export default function ProductDetailModal({
 
   return (
     <AnimatePresence>
-      <motion.div className="fixed inset-0 z-[80]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+      <motion.div className="fixed inset-0 z-[80] h-[100dvh] max-h-[100dvh] overflow-hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
         <button
           type="button"
           aria-label="Close modal backdrop"
@@ -466,7 +466,7 @@ export default function ProductDetailModal({
               )}
             </div>
 
-            <div className="shrink-0 z-20 border-t border-[#ead7b7]/45 bg-white/95 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3">
+            <div className="shrink-0 sticky bottom-0 z-20 border-t border-[#ead7b7]/45 bg-white/95 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3">
               {product.hasVariants ? (
                 <div className="mx-auto flex max-w-xl items-center gap-3">
                   <div className="flex items-center gap-1 rounded-xl border border-[#D5DAD0] bg-[#F9FAFB] overflow-hidden shrink-0">

@@ -405,36 +405,39 @@ export default function AdvanceOrders({ onOrderCompleted }: AdvanceOrdersProps =
     </div>
 
     {createOpen && createPortal(
-      <div className="fixed inset-0 top-0 left-0 right-0 bottom-0 w-screen h-screen h-[100dvh] z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-        <form onSubmit={create} className="max-h-[92vh] w-full max-w-4xl overflow-hidden overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl border border-[#E8D399]">
-          <div className="mb-5 flex items-center justify-between">
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-xs p-0 sm:p-4 overflow-hidden animate-in fade-in duration-150 h-[100dvh] max-h-[100dvh]">
+        <div className="absolute inset-0" onClick={() => setCreateOpen(false)} />
+        <form onSubmit={create} className="relative z-10 max-h-[100dvh] sm:max-h-[92dvh] h-[100dvh] sm:h-auto w-full max-w-4xl overflow-hidden flex flex-col rounded-none sm:rounded-3xl bg-white shadow-2xl border-0 sm:border border-[#E8D399]">
+          <div className="shrink-0 p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between bg-[#FBFAF6]">
             <div>
-              <h3 className="text-xl font-black text-[#0A0A0A]">Create Advance Order</h3>
+              <h3 className="text-lg sm:text-xl font-black text-[#0A0A0A]">Create Advance Order</h3>
               <p className="text-xs text-amber-700">Creates an advance receipt only - no revenue or final invoice.</p>
             </div>
             <button type="button" onClick={() => setCreateOpen(false)} className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 transition cursor-pointer">
               <X size={18} />
             </button>
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Customer Name *"><input required className={inputClass} value={form.customerName} onChange={e=>setForm({...form,customerName:e.target.value})}/></Field>
-            <Field label="Phone Number *"><input required className={inputClass} value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/></Field>
-            <Field label="Address"><textarea className={inputClass} value={form.address} onChange={e=>setForm({...form,address:e.target.value})}/></Field>
-            <Field label="Product Name *"><input required list="advance-products" className={inputClass} value={form.productName} onChange={e=>{const product=products.find(p=>p.name===e.target.value);setForm({...form,productName:e.target.value,category:product?.category||form.category})}}/><datalist id="advance-products">{products.map(p=><option key={p.id} value={p.name}/>)}</datalist></Field>
-            <Field label="Category"><input className={inputClass} value={form.category} onChange={e=>setForm({...form,category:e.target.value})}/></Field>
-            <Field label="Description"><textarea className={inputClass} value={form.description} onChange={e=>setForm({...form,description:e.target.value})}/></Field>
-            <Field label="Total Order Amount *"><input required min="0.01" step="0.01" type="number" className={inputClass} value={form.totalAmount} onChange={e=>setForm({...form,totalAmount:e.target.value})}/></Field>
-            <Field label="Deposit Amount Received *"><input required min="0" step="0.01" type="number" className={inputClass} value={form.depositAmount} onChange={e=>setForm({...form,depositAmount:e.target.value})}/></Field>
-            <Field label="Remaining Balance (automatic)"><div className="rounded-xl bg-violet-50 px-4 py-3 font-black text-violet-800">{formatCurrency(Math.max(0, Number(form.totalAmount||0)-Number(form.depositAmount||0)))}</div></Field>
-            <Field label="Deposit Payment Method"><select className={inputClass} value={form.paymentMethod} onChange={e=>setForm({...form,paymentMethod:e.target.value as AdvancePaymentMethod})}><option value="cash">Cash</option><option value="upi">QR</option><option value="card">Card</option></select></Field>
-            <Field label="Expected Delivery Date *"><input required type="date" className={inputClass} value={form.expectedDeliveryDate} onChange={e=>setForm({...form,expectedDeliveryDate:e.target.value})}/></Field>
-            <Field label="Order Status"><select disabled className={inputClass} value="pending_deposit"><option value="pending_deposit">Pending Deposit</option></select></Field>
-            <div className="md:col-span-2"><Field label="Reference Number"><input className={inputClass} value={form.reference_number} onChange={e=>setForm({...form,reference_number:e.target.value})} placeholder="e.g. PO-001, booking ref (optional)"/></Field></div>
-            <div className="md:col-span-2"><Field label="Remarks"><textarea className={inputClass} value={form.remarks} onChange={e=>setForm({...form,remarks:e.target.value})} placeholder="e.g. special instructions, colour, size notes"/></Field></div>
+          <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 overscroll-contain">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="Customer Name *"><input required className={inputClass} value={form.customerName} onChange={e=>setForm({...form,customerName:e.target.value})}/></Field>
+              <Field label="Phone Number *"><input required className={inputClass} value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/></Field>
+              <Field label="Address"><textarea className={inputClass} value={form.address} onChange={e=>setForm({...form,address:e.target.value})}/></Field>
+              <Field label="Product Name *"><input required list="advance-products" className={inputClass} value={form.productName} onChange={e=>{const product=products.find(p=>p.name===e.target.value);setForm({...form,productName:e.target.value,category:product?.category||form.category})}}/><datalist id="advance-products">{products.map(p=><option key={p.id} value={p.name}/>)}</datalist></Field>
+              <Field label="Category"><input className={inputClass} value={form.category} onChange={e=>setForm({...form,category:e.target.value})}/></Field>
+              <Field label="Description"><textarea className={inputClass} value={form.description} onChange={e=>setForm({...form,description:e.target.value})}/></Field>
+              <Field label="Total Order Amount *"><input required min="0.01" step="0.01" type="number" className={inputClass} value={form.totalAmount} onChange={e=>setForm({...form,totalAmount:e.target.value})}/></Field>
+              <Field label="Deposit Amount Received *"><input required min="0" step="0.01" type="number" className={inputClass} value={form.depositAmount} onChange={e=>setForm({...form,depositAmount:e.target.value})}/></Field>
+              <Field label="Remaining Balance (automatic)"><div className="rounded-xl bg-violet-50 px-4 py-3 font-black text-violet-800">{formatCurrency(Math.max(0, Number(form.totalAmount||0)-Number(form.depositAmount||0)))}</div></Field>
+              <Field label="Deposit Payment Method"><select className={inputClass} value={form.paymentMethod} onChange={e=>setForm({...form,paymentMethod:e.target.value as AdvancePaymentMethod})}><option value="cash">Cash</option><option value="upi">QR</option><option value="card">Card</option></select></Field>
+              <Field label="Expected Delivery Date *"><input required type="date" className={inputClass} value={form.expectedDeliveryDate} onChange={e=>setForm({...form,expectedDeliveryDate:e.target.value})}/></Field>
+              <Field label="Order Status"><select disabled className={inputClass} value="pending_deposit"><option value="pending_deposit">Pending Deposit</option></select></Field>
+              <div className="md:col-span-2"><Field label="Reference Number"><input className={inputClass} value={form.reference_number} onChange={e=>setForm({...form,reference_number:e.target.value})} placeholder="e.g. PO-001, booking ref (optional)"/></Field></div>
+              <div className="md:col-span-2"><Field label="Remarks"><textarea className={inputClass} value={form.remarks} onChange={e=>setForm({...form,remarks:e.target.value})} placeholder="e.g. special instructions, colour, size notes"/></Field></div>
+            </div>
           </div>
-          <div className="mt-6 flex justify-end gap-3">
-            <button type="button" onClick={()=>setCreateOpen(false)} className="rounded-xl border px-5 py-2.5 font-bold cursor-pointer hover:bg-gray-50 transition">Cancel</button>
-            <button disabled={saving} className="rounded-xl bg-[#7e22ce] px-5 py-2.5 font-black text-white shadow-md disabled:opacity-50 cursor-pointer hover:bg-[#6b1cb1] transition">{saving?'Creating...':'Create & Save Advance Receipt'}</button>
+          <div className="sticky bottom-0 z-20 shrink-0 px-4 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] sm:px-6 sm:py-4 border-t border-gray-100 bg-[#FBFAF6] flex items-center justify-between sm:justify-end gap-3 w-full">
+            <button type="button" onClick={()=>setCreateOpen(false)} className="min-h-[44px] sm:min-h-0 rounded-xl border px-5 py-2.5 font-bold cursor-pointer hover:bg-gray-50 transition flex items-center justify-center">Cancel</button>
+            <button disabled={saving} className="flex-1 sm:flex-none min-h-[44px] sm:min-h-0 rounded-xl bg-[#7e22ce] px-5 py-2.5 font-black text-white shadow-md disabled:opacity-50 cursor-pointer hover:bg-[#6b1cb1] transition flex items-center justify-center whitespace-nowrap">{saving?'Creating...':'Create & Save Advance Receipt'}</button>
           </div>
         </form>
       </div>,
@@ -442,9 +445,10 @@ export default function AdvanceOrders({ onOrderCompleted }: AdvanceOrdersProps =
     )}
 
     {paymentOrder && createPortal(
-      <div className="fixed inset-0 top-0 left-0 right-0 bottom-0 w-screen h-screen h-[100dvh] z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-        <form onSubmit={receivePayment} className="w-full max-w-md max-h-[92vh] overflow-hidden overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl border border-[#E8D399]">
-          <div className="mb-5 flex items-start justify-between">
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-xs p-0 sm:p-4 overflow-hidden animate-in fade-in duration-150 h-[100dvh] max-h-[100dvh]">
+        <div className="absolute inset-0" onClick={()=>setPaymentOrder(null)} />
+        <form onSubmit={receivePayment} className="relative z-10 w-full max-w-md h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-[92dvh] overflow-hidden flex flex-col rounded-none sm:rounded-3xl bg-white shadow-2xl border-0 sm:border border-[#E8D399]">
+          <div className="shrink-0 p-5 sm:p-6 border-b border-gray-100 flex items-start justify-between bg-[#FBFAF6]">
             <div>
               <p className="text-xs font-black uppercase tracking-wider text-emerald-600 font-mono">{paymentOrder.deposit_id}</p>
               <h3 className="text-xl font-black text-[#273126]">Receive Remaining Payment</h3>
@@ -453,6 +457,7 @@ export default function AdvanceOrders({ onOrderCompleted }: AdvanceOrdersProps =
               <X size={16}/>
             </button>
           </div>
+          <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 overscroll-contain">
           <div className="mb-6 rounded-2xl bg-emerald-50 py-5 text-center">
             {(() => {
               const couponDisc = appliedCoupon ? Math.round(paymentOrder.remaining_balance * (appliedCoupon.percentage / 100) * 100) / 100 : 0;
@@ -514,7 +519,10 @@ export default function AdvanceOrders({ onOrderCompleted }: AdvanceOrdersProps =
               <textarea className={inputClass} value={paymentForm.remarks} onChange={e=>setPaymentForm({...paymentForm,remarks:e.target.value})} placeholder="Notes about this payment (optional)"/>
             </Field>
             <p className="mt-2 rounded-xl bg-amber-50 p-3 text-[11px] font-semibold text-amber-800">Confirmation marks the order Completed, creates one official invoice, and recognizes the full {formatCurrency(paymentOrder.total_amount)} as revenue.</p>
-            <button disabled={saving} className="mt-5 w-full rounded-xl bg-emerald-600 py-3.5 font-black text-white shadow-lg shadow-emerald-600/30 transition-transform active:scale-95 disabled:opacity-50 cursor-pointer hover:bg-emerald-700">
+          </div>
+          </div>
+          <div className="sticky bottom-0 z-20 shrink-0 px-4 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] sm:px-6 sm:py-4 border-t border-gray-100 bg-[#FBFAF6]">
+            <button disabled={saving} className="w-full min-h-[44px] sm:min-h-0 rounded-xl bg-emerald-600 py-3.5 font-black text-white shadow-lg shadow-emerald-600/30 transition-transform active:scale-95 disabled:opacity-50 cursor-pointer hover:bg-emerald-700 flex items-center justify-center">
               {saving?'Processing...':'Confirm Final Payment'}
             </button>
           </div>
@@ -524,12 +532,12 @@ export default function AdvanceOrders({ onOrderCompleted }: AdvanceOrdersProps =
     )}
 
     {selected && createPortal(
-      <div className="fixed inset-0 top-0 left-0 right-0 bottom-0 w-screen h-screen h-[100dvh] z-[9999] flex justify-end bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+      <div className="fixed inset-0 z-[9999] flex justify-end bg-black/60 backdrop-blur-xs animate-in fade-in duration-150 h-[100dvh] max-h-[100dvh]">
         {/* Backdrop click dismiss */}
         <div className="absolute inset-0" onClick={() => setSelected(null)} />
 
         {/* Drawer Panel covering full view height */}
-        <div className="relative z-10 h-screen h-[100dvh] w-full max-w-xl bg-white shadow-2xl flex flex-col border-l border-[#E8D399] animate-in slide-in-from-right duration-200">
+        <div className="relative z-10 h-[100dvh] max-h-[100dvh] w-full max-w-xl bg-white shadow-2xl flex flex-col border-l border-[#E8D399] animate-in slide-in-from-right duration-200">
           {/* Sticky Drawer Header */}
           <div className="shrink-0 px-6 py-4 border-b border-gray-200 bg-[#0A0A0A] text-white flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -654,7 +662,7 @@ export default function AdvanceOrders({ onOrderCompleted }: AdvanceOrdersProps =
           </div>
 
           {/* Sticky Drawer Footer */}
-          <div className="shrink-0 px-6 py-4 border-t border-gray-200 bg-[#FBFAF6] flex items-center justify-between gap-3">
+          <div className="sticky bottom-0 z-20 shrink-0 px-4 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] sm:px-6 sm:py-4 border-t border-gray-200 bg-[#FBFAF6] flex items-center justify-between gap-3">
             <div className="flex gap-2">
               <button
                 type="button"

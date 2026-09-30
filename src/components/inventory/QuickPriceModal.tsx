@@ -87,9 +87,9 @@ export const QuickPriceModal: React.FC<Props> = ({ isOpen, item, onClose, onSucc
   }
 
   return createPortal(
-    <div className="fixed inset-0 top-0 left-0 right-0 bottom-0 w-screen h-screen h-[100dvh] z-[9999] flex items-center justify-center bg-black/75 backdrop-blur-sm p-0 sm:p-4 overflow-hidden animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/75 backdrop-blur-sm p-0 sm:p-4 overflow-hidden animate-in fade-in duration-150 h-[100dvh] max-h-[100dvh]">
       <div className="absolute inset-0" onClick={onClose} />
-      <div className="relative z-10 bg-white rounded-none sm:rounded-2xl w-full max-w-md h-screen h-[100dvh] sm:h-auto sm:max-h-[92vh] shadow-2xl overflow-hidden border-0 sm:border border-[#E8D399]/50 animate-in fade-in zoom-in-95 flex flex-col">
+      <div className="relative z-10 bg-white rounded-none sm:rounded-2xl w-full max-w-md h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-[92dvh] shadow-2xl overflow-hidden border-0 sm:border border-[#E8D399]/50 animate-in fade-in zoom-in-95 flex flex-col">
         {/* Header */}
         <div className="px-4 py-3 sm:px-5 sm:py-4 border-b border-gray-100 flex items-center justify-between bg-[#FBFAF6] shrink-0">
           <div className="flex items-center gap-2.5">
@@ -133,14 +133,14 @@ export const QuickPriceModal: React.FC<Props> = ({ isOpen, item, onClose, onSucc
           </div>
         </div>
 
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-5 space-y-4 text-xs">
-          {error && (
-            <div className="p-2.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-[11px] font-bold flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
-              <span>{error}</span>
-            </div>
-          )}
+        <form onSubmit={handleSubmit} className="flex-1 min-h-0 flex flex-col overflow-hidden">
+          <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-5 space-y-4 text-xs overscroll-contain">
+            {error && (
+              <div className="p-2.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-[11px] font-bold flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+                <span>{error}</span>
+              </div>
+            )}
 
           <div>
             <label className="block font-bold text-[#374151] mb-1.5">
@@ -187,19 +187,21 @@ export const QuickPriceModal: React.FC<Props> = ({ isOpen, item, onClose, onSucc
             </div>
           </div>
 
-          {/* Footer Actions */}
-          <div className="pt-2 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] flex items-center justify-end gap-2 shrink-0">
+          </div>
+
+          {/* Sticky Footer Actions */}
+          <div className="sticky bottom-0 z-20 px-4 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] sm:px-5 sm:py-3.5 border-t border-gray-100 bg-[#FBFAF6] flex items-center justify-between sm:justify-end gap-3 w-full shrink-0">
             <button
               type="button"
               onClick={onClose}
-              className="h-9 px-4 text-xs font-bold rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+              className="min-h-[48px] sm:min-h-0 px-4 text-xs font-bold rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer shrink-0 flex items-center justify-center"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="h-9 px-4 text-xs font-bold rounded-xl bg-[#0A0A0A] text-[#D4AF37] border border-[#D4AF37] hover:bg-[#1A1A1A] transition-all shadow-xs disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+              className="flex-1 sm:flex-none min-h-[48px] sm:min-h-0 px-4 text-xs font-bold rounded-xl bg-[#0A0A0A] text-[#D4AF37] border border-[#D4AF37] hover:bg-[#1A1A1A] transition-all shadow-xs disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
             >
               {loading ? (
                 <>

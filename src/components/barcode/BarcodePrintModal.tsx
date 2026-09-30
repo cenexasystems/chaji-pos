@@ -52,6 +52,10 @@ export const BarcodePrintModal: React.FC<BarcodePrintModalProps> = ({
   const [printerType, setPrinterType] = useState<'label' | 'regular'>(() => {
     return getStoredBarcodeSettings().printerType || 'label'
   })
+  const [printError, setPrintError] = useState<string | null>(null)
+
+  const parsedQty = parseInt(quantity.trim(), 10)
+  const displayCount = !isNaN(parsedQty) && parsedQty > 0 ? parsedQty : 1
 
   const handlePrinterTypeChange = (type: 'label' | 'regular') => {
     setPrinterType(type)
@@ -346,30 +350,37 @@ export const BarcodePrintModal: React.FC<BarcodePrintModalProps> = ({
       } catch {}
     }
 
-    setTimeout(() => {
-      try {
-        if (iframe.contentWindow) {
-          iframe.contentWindow.onbeforeunload = null
-          iframe.contentWindow.onunload = null
-          iframe.contentWindow.onafterprint = cleanup
-          iframe.contentWindow.focus()
-          iframe.contentWindow.print()
-        }
-      } catch (err) {
-        console.warn('[BarcodePrintModal] Failed to execute print:', err)
-      } finally {
-        setTimeout(cleanup, 2500)
+    try {
+      const win = iframe.contentWindow
+      if (!win || typeof win.print !== 'function') {
+        throw new Error('Printing is not supported in this browser.')
       }
-    }, 200)
+
+      setPrintError(null)
+      win.onbeforeunload = null
+      win.onunload = null
+      win.onafterprint = cleanup
+      win.focus()
+      win.print()
+    } catch (err) {
+      console.warn('[BarcodePrintModal] Failed to execute print:', err)
+      setPrintError('Printing is not supported in this browser. Please open in Chrome or Safari.')
+      cleanup()
+      return
+    }
+
+    // Safety fallback cleanup in case onafterprint doesn't fire
+    setTimeout(cleanup, 5000)
   } catch (err) {
     console.warn('[BarcodePrintModal] Failed to execute print:', err)
+    setPrintError('Printing error occurred. Please try again or open in Chrome/Safari.')
   }
 }
 
   return createPortal(
-    <div className="fixed inset-0 top-0 left-0 right-0 bottom-0 w-screen h-screen h-[100dvh] z-[9999] flex items-center justify-center bg-black/75 backdrop-blur-sm p-0 sm:p-4 overflow-hidden animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/75 backdrop-blur-sm p-0 sm:p-4 overflow-hidden animate-in fade-in duration-150 h-[100dvh] max-h-[100dvh]">
       <div className="absolute inset-0" onClick={onClose} />
-      <div className="relative z-10 bg-white rounded-none sm:rounded-3xl max-w-2xl sm:max-w-3xl w-full h-screen h-[100dvh] sm:h-auto sm:max-h-[92vh] border-0 sm:border border-[#E8D399] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-150">
+      <div className="relative z-10 bg-white rounded-none sm:rounded-3xl max-w-2xl sm:max-w-3xl w-full h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-[92dvh] border-0 sm:border border-[#E8D399] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-150">
         {/* Header */}
         <div className="bg-[#0A0A0A] px-4 py-3 sm:px-6 sm:py-4 border-b border-[#D4AF37]/30 flex items-center justify-between text-white shrink-0">
           <div className="flex items-center gap-3">
@@ -394,7 +405,7 @@ export const BarcodePrintModal: React.FC<BarcodePrintModalProps> = ({
         </div>
 
         {/* Body - Scrollable */}
-        <div className="p-4 sm:p-6 space-y-4 sm:space-y-4 overflow-y-auto flex-1 min-h-0">
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-4 overflow-y-auto flex-1 min-h-0 overscroll-contain">
           {/* Barcode Info Card */}
           <div className="bg-[#FBFAF6] border border-[#E8D399] rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
@@ -571,22 +582,29 @@ export const BarcodePrintModal: React.FC<BarcodePrintModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="bg-[#FBFAF6] px-4 py-3 sm:px-6 sm:py-3.5 border-t border-[#E8D399] flex items-center justify-between shrink-0 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl border border-gray-300 text-gray-700 font-bold text-xs sm:text-sm hover:bg-gray-100 transition-colors cursor-pointer shrink-0"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handlePrint}
-            className="flex items-center gap-1.5 sm:gap-2 px-4 py-2 sm:px-6 sm:py-2.5 rounded-xl bg-[#0A0A0A] border border-[#D4AF37] text-[#D4AF37] font-black hover:bg-[#1A1A1A] transition-all shadow-md cursor-pointer hover:scale-[1.02] text-xs sm:text-sm shrink-0"
-          >
-            <Printer size={16} />
-            Print {quantity || '1'} {quantity === '1' ? 'Sticker' : 'Stickers'}
-          </button>
+        <div className="sticky bottom-0 z-20 bg-[#FBFAF6] px-4 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] sm:px-6 sm:py-3.5 border-t border-[#E8D399] flex flex-col gap-2 shrink-0">
+          {printError && (
+            <div className="text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-300 rounded-xl px-3 py-2 text-center shrink-0">
+              {printError}
+            </div>
+          )}
+          <div className="flex items-center justify-between gap-3 w-full">
+            <button
+              type="button"
+              onClick={onClose}
+              className="min-h-[48px] sm:min-h-0 px-4 sm:px-5 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-bold text-xs sm:text-sm hover:bg-gray-100 transition-colors cursor-pointer shrink-0 flex items-center justify-center"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handlePrint}
+              className="flex-1 sm:flex-none min-h-[48px] sm:min-h-0 flex items-center justify-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2.5 rounded-xl bg-[#0A0A0A] border border-[#D4AF37] text-[#D4AF37] font-black hover:bg-[#1A1A1A] transition-all shadow-md cursor-pointer hover:scale-[1.02] text-xs sm:text-sm shrink-0 whitespace-nowrap"
+            >
+              <Printer size={16} />
+              Print {displayCount} {displayCount === 1 ? 'Sticker' : 'Stickers'}
+            </button>
+          </div>
         </div>
       </div>
     </div>,
