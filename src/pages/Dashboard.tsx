@@ -467,7 +467,7 @@ export default function Dashboard() {
       .filter(o => normalizeOrderType(o.order_type) !== 'online_request')
     // Channel is determined by order_mode. Older orders can use a different
     // order_type, so requiring exactly `pos_sale` hides valid online bills.
-    const offlinePOS  = billableCompleted.filter(o => normalizeOrderMode(o.order_mode) === 'offline' && normalizeOrderType(o.order_type) !== 'manual_sale')
+    const offlinePOS  = billableCompleted.filter(o => normalizeOrderMode(o.order_mode) === 'offline')
     const onlinePOS   = billableCompleted.filter(o => normalizeOrderMode(o.order_mode) === 'online')
     const manualSales = billableCompleted.filter(o => normalizeOrderType(o.order_type) === 'manual_sale')
 
@@ -540,7 +540,7 @@ export default function Dashboard() {
     const todayBills = todayOrders.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 10)
 
     // Today's channel breakdown
-    const todayOffline = todayOrders.filter(o => normalizeOrderType(o.order_type) === 'pos_sale' && normalizeOrderMode(o.order_mode) !== 'online')
+    const todayOffline = todayOrders.filter(o => normalizeOrderMode(o.order_mode) !== 'online')
     const todayOnline = todayOrders.filter(o => normalizeOrderType(o.order_type) === 'pos_sale' && normalizeOrderMode(o.order_mode) === 'online')
     const todayManual = todayOrders.filter(o => normalizeOrderType(o.order_type) === 'manual_sale')
     const todayOfflineRevenue = todayOffline.reduce((s, o) => s + getOrderTotal(o), 0)

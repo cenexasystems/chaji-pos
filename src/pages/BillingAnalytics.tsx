@@ -324,7 +324,7 @@ export default function BillingAnalytics() {
     const billableCompleted = completedOrders.filter((order) => normalizeOrderType(order.order_type) !== 'online_request')
 
     const offlinePOS = billableCompleted.filter(
-      (order) => normalizeOrderType(order.order_type) === 'pos_sale' && normalizeOrderMode(order.order_mode) !== 'online',
+      (order) => normalizeOrderMode(order.order_mode) !== 'online',
     )
     const onlinePOS = billableCompleted.filter(
       (order) => normalizeOrderType(order.order_type) === 'pos_sale' && normalizeOrderMode(order.order_mode) === 'online',
